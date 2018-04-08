@@ -1,12 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="editApp">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
     <title>Image Editor</title>
+
+    <script src="https://code.angularjs.org/1.6.9/angular.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/css/style.css">
+    <script src="/javascript/app.js"></script>
 </head>
-<body>
-    
+<body ng-controller="mainController">
+    <div class="container">
+        <div class="canvas-wrapper">
+            <canvas id="canvas" class="canvas"></canvas>
+        </div>
+        
+        
+        <div
+            ng-controller="dragController"   
+            id="toolbar" 
+            class="tool-bar">
+            <div id="toolbarheader" class="drag-header">Click here to drag <button ng-click="minimise('toolbar')">-</button></div> 
+            Tool Bar
+        </div>
+
+        <div 
+            ng-controller="dragController"
+            id="controller" 
+            class="controller">
+            <div 
+                id="controllerheader" 
+                class="drag-header">
+                Controller
+                <button ng-click="minimise('controller')">-</button> 
+            </div> 
+
+            Import: <input 
+                type="file" 
+                id="imgFile" 
+                accept=".png, .jpg, .jpeg" 
+                onchange="angular.element(this).scope().importImg(event)">
+        </div>
+    </div>
+
 </body>
 </html>

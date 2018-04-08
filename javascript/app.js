@@ -13,6 +13,8 @@ function($scope){
         startY: 0
     };
 
+    // Event handle which will be attached to onchange event 
+    // listener of "choose file" (import) button.
     $scope.importImg = function(event) {
         var file = document.getElementById("imgFile").files[0];
         var canvas = document.getElementById("canvas");
@@ -42,6 +44,7 @@ function($scope){
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
+    // Set the canvas width and height to image width and height.
     $scope.setDimension = function(canvas) {
         var image = $scope.state.backgroundImg;
         canvas.width = image.width;
@@ -74,7 +77,8 @@ function($scope){
         }
     }
 
-
+    // Mouse click event handler to check if mouse click co-ord
+    // is within item co-ord in the config.
     $scope.mouseDown = function(event) {
         event.preventDefault();
         event.stopPropagation();
@@ -84,25 +88,23 @@ function($scope){
         var offsetY = borderBox.top;
         var layers = $scope.state.layers;
 
-        // get the current mouse position
+        // Get the current mouse position.
         var mx = parseInt(event.clientX - offsetX);
         var my = parseInt(event.clientY - offsetY);
 
-        // test each shape to see if mouse is inside
+        // Test each shape to see if mouse is inside.
         $scope.state.dragOk = false;
         for (var i=0; i<layers.length; i++){
             var item = layers[i];
-            // decide if the shape is a rect or circle            
+            // Test if the mouse is inside this rect.
             if (item.config.width){
-                console.log(mx, " ", my, " ", item.config);   
-                // test if the mouse is inside this rect
                 switch (item.type){
                     case "fillText":
                         if (mx > item.config.x 
                             && mx < item.config.x + item.config.width 
                             && my < item.config.y 
                             && my > item.config.y - item.config.height) {
-                            // if yes, set that rects isDragging=true 
+                            // If yes, set that rects isDragging = true 
                             $scope.state.dragOk = true;
                             item.isDragging = true;
                     }
@@ -112,7 +114,7 @@ function($scope){
                             && mx < item.config.x + item.config.width 
                             && my > item.config.y 
                             && my < item.config.y + item.config.height) {
-                            // if yes, set that rects isDragging=true 
+                            // Ff yes, set that rects isDragging = true 
                             $scope.state.dragOk = true;
                             item.isDragging = true;
                         }
@@ -121,25 +123,25 @@ function($scope){
                 
             } 
         }
-        // save the current mouse position
+        // Save the current mouse position for mouseMove
         $scope.state.startX = mx;
         $scope.state.startY = my;
     }
 
-
+    // Mouse click release handler to reset all dragging flags in layers array.
     $scope.mouseUp = function(event) {
         event.preventDefault();
         event.stopPropagation();
 
         var layers = $scope.state.layers;
 
-        // clear all the dragging flags
+        // Clear all the dragging flags.
         $scope.state.dragOk = false;
         for (var i=0; i<layers.length; i++) {
             layers[i].isDragging=false;
         }
     }
-
+    // Mouse move event handler to move items co-ord in layers array.
     $scope.mouseMove = function(event) {
         var canvas = document.getElementById("canvas");
         var borderBox = canvas.getBoundingClientRect();
@@ -147,24 +149,24 @@ function($scope){
         var offsetY = borderBox.top;
         var layers = $scope.state.layers;
 
-        // if we're dragging anything...
+        // If we're dragging anything...
         if ($scope.state.dragOk){
-            // tell the browser we're handling this mouse event
+            // Tell the browser we're handling this mouse event.
             event.preventDefault();
             event.stopPropagation();
 
-            // get the current mouse position
+            // Get the current mouse position.
             var mx = parseInt(event.clientX-offsetX);
             var my = parseInt(event.clientY-offsetY);
 
-            // calculate the distance the mouse has moved
-            // since the last mousemove
+            // Calculate the distance the mouse has moved
+            // since the last mousemove.
             var dx = mx - $scope.state.startX;
             var dy = my - $scope.state.startY;
 
-            // move each rect that isDragging 
+            // Move each rect that isDragging 
             // by the distance the mouse has moved
-            // since the last mousemove
+            // since the last mousemove.
             for(var i=0; i<layers.length; i++){
                 var item = layers[i];
                 if(item.isDragging){
@@ -173,10 +175,10 @@ function($scope){
                 }
             }
 
-            // redraw the scene with the new rect positions
+            // Redraw the scene with the new rect positions.
             $scope.paintCanvas();
 
-            // reset the starting mouse position for the next mousemove
+            // Reset the starting mouse position for the next mousemove.
             $scope.state.startX = mx;
             $scope.state.startY = my;
 
@@ -184,6 +186,7 @@ function($scope){
         }
     }
 
+    // Set the canvas mouse listeners to our handlers.
     $scope.setCanvasListeners = function() {
         var canvas = document.getElementById("canvas");
         canvas.onmousedown = $scope.mouseDown;
@@ -195,7 +198,7 @@ function($scope){
 
 
 
-    // After all functions are declared envoke these.
+    // After all above functions are declared envoke these.
     $scope.setCanvasListeners();
 }]);
 

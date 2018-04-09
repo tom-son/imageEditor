@@ -7,10 +7,13 @@ function($scope){
         showTools: {
 
         },
-        layers: [{type: 'fillText', config: {string: "Hello world", x: 60, y: 60, width:150, height:35}, isDragging: false}],
+        layers: [{type: 'fillText', config: {string: "Hello world", x: 60, y: 60, width:150, height:35}},
+                    {type: 'fillText', config: {string: "Hello world", x: 60, y: 60, width:150, height:35}}],
         dragOk: false,
         startX: 0,
-        startY: 0
+        startY: 0,
+        // Set to the item that was clicked otherwise -1.
+        clickedItem: -1,
     };
 
     // Event handle which will be attached to onchange event 
@@ -38,8 +41,7 @@ function($scope){
     }    
 
     // Clear canvas to removing all canvas drawing.
-    $scope.clearCanvas = function() {
-        var canvas = document.getElementById("canvas");
+    $scope.clearCanvas = function(canvas) {
         var ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
@@ -58,7 +60,7 @@ function($scope){
         var canvas = document.getElementById("canvas");
         var ctx = canvas.getContext("2d");
 
-        $scope.clearCanvas();
+        $scope.clearCanvas(document.getElementById("canvas"));
         
         ctx.drawImage($scope.state.backgroundImg,0,0);
 
@@ -100,23 +102,29 @@ function($scope){
             if (item.config.width){
                 switch (item.type){
                     case "fillText":
+                        //        |
+                        // (x,y) .|________
                         if (mx > item.config.x 
                             && mx < item.config.x + item.config.width 
                             && my < item.config.y 
                             && my > item.config.y - item.config.height) {
                             // If yes, set that rects isDragging = true 
                             $scope.state.dragOk = true;
-                            item.isDragging = true;
+                            $scope.state.clickedItem = i;
+                            // item.isDragging = true;
                     }
                         break;
                     case "drawImage":
+                        //  (x,y) .______
+                        //         |
+                        //         |
                         if (mx > item.config.x 
                             && mx < item.config.x + item.config.width 
                             && my > item.config.y 
                             && my < item.config.y + item.config.height) {
                             // Ff yes, set that rects isDragging = true 
                             $scope.state.dragOk = true;
-                            item.isDragging = true;
+                            // item.isDragging = true;
                         }
                         break;
                 }
@@ -167,12 +175,17 @@ function($scope){
             // Move each rect that isDragging 
             // by the distance the mouse has moved
             // since the last mousemove.
-            for(var i=0; i<layers.length; i++){
-                var item = layers[i];
-                if(item.isDragging){
-                    item.config.x+=dx;
-                    item.config.y+=dy;
-                }
+            // for(var i=0; i<layers.length; i++){
+            //     var item = layers[i];
+            //     if(item.isDragging){
+            //         item.config.x+=dx;
+            //         item.config.y+=dy;
+            //     }
+            // }
+            var item = $scope.state.clickedItem;
+            if ($scope.state.clickedItem >= 0) {
+                layers[item].config.x+=dx;
+                layers[item].config.y+=dy;
             }
 
             // Redraw the scene with the new rect positions.
@@ -187,8 +200,7 @@ function($scope){
     }
 
     // Set the canvas mouse listeners to our handlers.
-    $scope.setCanvasListeners = function() {
-        var canvas = document.getElementById("canvas");
+    $scope.setCanvasListeners = function(canvas) {
         canvas.onmousedown = $scope.mouseDown;
         canvas.onmouseup = $scope.mouseUp;
         canvas.onmousemove = $scope.mouseMove;
@@ -199,7 +211,7 @@ function($scope){
 
 
     // After all above functions are declared envoke these.
-    $scope.setCanvasListeners();
+    $scope.setCanvasListeners(document.getElementById("canvas"));
 }]);
 
 
@@ -274,7 +286,7 @@ function($scope){
     $scope.dragElement(document.getElementById(("toolbar")));
     
     $scope.minimise = function(id) {
-        console.log(id);
+        alert("Alert: Window will disappear press 'command + s' or 'window + s' to display again!");
         document.getElementById(id).style.display =  "none";
 
     }

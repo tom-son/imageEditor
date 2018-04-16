@@ -4,21 +4,23 @@
 
 body {
     margin: 0px;
+    height: 100vh;
 }
 
-.container {
-    height: 100vh;
+.canvas-container {
+    height: 95%;
+    background-color: #191919;
 }
 
 .canvas-wrapper {
-    height: 100vh;
-    background-color: #262626;
 }
 
 .canvas {
-    background-image: url("/assets/checkers.png");
+    background-image: url("../assets/checkers.png");
     background-repeat: repeat;
     padding: 0;
+    height: 605px;
+    width: 900px;
     margin: auto;
     display: block;
     position: absolute;
@@ -26,6 +28,7 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
+    border: 1px solid red;
     /* background-color: black;  */
 }
 
@@ -39,12 +42,40 @@ body {
     position: absolute;
     z-index: 9;
     border: 1px solid #d3d3d3;
-    bottom: 0px;
-    left: 25%;
-}
-.tool-bar {
-    top: 25%;
     right: 0px;
-    position: absolute;
-    border: 1px solid #d3d3d3;
+    top: 25%;
+    background-color: #444444;
+    border: 1px solid #000;
+}
+.toolbar-container {
+    height: 5%;
+    padding: 0px 40%;
+    background-color: #202020;
+}
+
+.toolbar {
+width: 500px;
+}
+
+/* turn off all button type styling for now */
+button, input[type="submit"], input[type="reset"] {
+    background: none;
+    color: inherit;
+    border: none;
+    padding: 5px;
+    font: inherit;
+    cursor: pointer;
+    outline: inherit;
+}
+
+.glyphicon {
+    font-size: 24px;
+}
+
+button:hover {
+    background-color: #292929;
+}
+/* keeping default input type file box hidden */
+input[type="file"] {
+    display: none;
 }

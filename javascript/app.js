@@ -3,22 +3,28 @@ var editApp = angular.module('editApp', []);
 editApp.controller('mainController', ['$scope',
 function($scope){
     $scope.state = {
+        textString: "",
+        fontSize: 12,
+        font: "",
+        fontColor: "",
+        fonts: [
+            "Arial",
+            "Serif"
+        ],
         backgroundImg: null,
         showTools: {
 
         },
-        layers: [{type: 'fillText', config: {string: "Hello world", x: 60, y: 60, width:150, height:35}},
-                    {type: 'fillText', config: {string: "Hello world", x: 60, y: 60, width:150, height:35}}],
+        layers: [],
         dragOk: false,
         startX: 0,
-        startY: 0,
-        // Set to the item that was clicked otherwise -1.
-        clickedItem: -1,
+        startY: 0
     };
 
-    // Event handle which will be attached to onchange event 
+    // Event handle which w ill be attached to onchange event 
     // listener of "choose file" (import) button.
     $scope.importImg = function(event) {
+        console.log("importimg clicked")
         var file = document.getElementById("imgFile").files[0];
         var canvas = document.getElementById("canvas");
         var ctx = canvas.getContext("2d");
@@ -41,7 +47,8 @@ function($scope){
     }    
 
     // Clear canvas to removing all canvas drawing.
-    $scope.clearCanvas = function(canvas) {
+    $scope.clearCanvas = function() {
+        var canvas = document.getElementById("canvas");
         var ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
@@ -60,7 +67,7 @@ function($scope){
         var canvas = document.getElementById("canvas");
         var ctx = canvas.getContext("2d");
 
-        $scope.clearCanvas(document.getElementById("canvas"));
+        $scope.clearCanvas();
         
         ctx.drawImage($scope.state.backgroundImg,0,0);
 
@@ -69,7 +76,8 @@ function($scope){
             switch(layers[i].type){
                 case "fillText":
                     var config = layers[i].config;
-                    ctx.font = "30px Arial";
+                    ctx.font = config.font;
+                    ctx.fillStyle = config.colour;
                     ctx.fillText(
                         config.string,
                         config.x,
@@ -77,7 +85,82 @@ function($scope){
                     break;
             }
         }
+
+
+
+
+        $scope.paintLayers();
     }
+
+    $scope.paintLayers = function() {
+        setTimeout(function() {
+            $scope.state.layers.forEach(function(element, index) {
+                console.log("painting layers: ", index + "Layer");
+                var id = index + "Layer";
+
+    
+    
+                var canvas = document.getElementById(index+"Layer");
+                canvas.style ="background: white;"
+                var ctx = canvas.getContext("2d");
+    
+    
+                switch(element.type){
+                    case "fillText":
+                        var config = element.config;
+                        ctx.font = config.font;
+                        ctx.fillStyle = config.colour;
+                        ctx.fillText(
+                            config.string,
+                            config.x,
+                            config.y);
+                        break;
+                }
+    
+            });
+        },1500);
+        
+    }
+
+
+
+    $scope.addText = function(xpos, ypos) {
+        $scope.state.layers.push({
+            type: "fillText",
+            config: {
+                string: $scope.state.textString,
+                x: xpos,
+                y: ypos,
+                font: $scope.state.fontSize + "px " + $scope.state.font,
+                colour: $scope.state.fontColor
+            }
+        });
+        $scope.paintCanvas();
+        $scope.setDefaultValues();
+    }
+
+    
+    $scope.updateFont = function() {
+        console.log($scope.state.font);
+        console.log($scope.state.fontColor);
+    }
+
+    // Set nessesary values in scope to default. 
+    $scope.setDefaultValues = function() {
+        $scope.state.textString = "";
+        $scope.state.fontSize = 12;
+    }
+
+   
+
+
+
+
+
+
+
+
+
 
     // Mouse click event handler to check if mouse click co-ord
     // is within item co-ord in the config.
@@ -102,29 +185,23 @@ function($scope){
             if (item.config.width){
                 switch (item.type){
                     case "fillText":
-                        //        |
-                        // (x,y) .|________
                         if (mx > item.config.x 
                             && mx < item.config.x + item.config.width 
                             && my < item.config.y 
                             && my > item.config.y - item.config.height) {
                             // If yes, set that rects isDragging = true 
                             $scope.state.dragOk = true;
-                            $scope.state.clickedItem = i;
-                            // item.isDragging = true;
+                            item.isDragging = true;
                     }
                         break;
                     case "drawImage":
-                        //  (x,y) .______
-                        //         |
-                        //         |
                         if (mx > item.config.x 
                             && mx < item.config.x + item.config.width 
                             && my > item.config.y 
                             && my < item.config.y + item.config.height) {
                             // Ff yes, set that rects isDragging = true 
                             $scope.state.dragOk = true;
-                            // item.isDragging = true;
+                            item.isDragging = true;
                         }
                         break;
                 }
@@ -175,17 +252,12 @@ function($scope){
             // Move each rect that isDragging 
             // by the distance the mouse has moved
             // since the last mousemove.
-            // for(var i=0; i<layers.length; i++){
-            //     var item = layers[i];
-            //     if(item.isDragging){
-            //         item.config.x+=dx;
-            //         item.config.y+=dy;
-            //     }
-            // }
-            var item = $scope.state.clickedItem;
-            if ($scope.state.clickedItem >= 0) {
-                layers[item].config.x+=dx;
-                layers[item].config.y+=dy;
+            for(var i=0; i<layers.length; i++){
+                var item = layers[i];
+                if(item.isDragging){
+                    item.config.x+=dx;
+                    item.config.y+=dy;
+                }
             }
 
             // Redraw the scene with the new rect positions.
@@ -200,7 +272,8 @@ function($scope){
     }
 
     // Set the canvas mouse listeners to our handlers.
-    $scope.setCanvasListeners = function(canvas) {
+    $scope.setCanvasListeners = function() {
+        var canvas = document.getElementById("canvas");
         canvas.onmousedown = $scope.mouseDown;
         canvas.onmouseup = $scope.mouseUp;
         canvas.onmousemove = $scope.mouseMove;
@@ -211,7 +284,7 @@ function($scope){
 
 
     // After all above functions are declared envoke these.
-    $scope.setCanvasListeners(document.getElementById("canvas"));
+    $scope.setCanvasListeners();
 }]);
 
 
@@ -240,6 +313,25 @@ function($scope){
 
 editApp.controller('dragController', ['$scope',
 function($scope){
+    $scope.showControllers = {
+        Image: false,
+        Text: false,
+        Layers: false
+    };
+
+
+    // Event handler to open the correct tool edit feature
+    // Sets all element in showTools to false. Then turns
+    // correct tool to true to display.
+    $scope.openController = function(controllerName) {
+        for(let controller in $scope.showControllers) {
+            $scope.showControllers[controller] = false;
+        }
+        $scope.showControllers[controllerName] = true;
+        console.log($scope.showControllers);
+    };
+
+
     //Make the DIV element draggagle:
     $scope.dragElement = function(elmnt) {
         var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
@@ -283,17 +375,16 @@ function($scope){
     }
 
     $scope.dragElement(document.getElementById(("controller")));
-    $scope.dragElement(document.getElementById(("toolbar")));
-    
+
     $scope.minimise = function(id) {
-        alert("Alert: Window will disappear press 'command + s' or 'window + s' to display again!");
+        console.log(id);
         document.getElementById(id).style.display =  "none";
+        alert("Alert: To display controller again press 'control + s'")
 
     }
 
     $scope.show = function(e) {
         if (e.ctrlKey && e.keyCode == 83) {
-            document.getElementById('toolbar').style.display = "block";
             document.getElementById('controller').style.display = "block";
         }
     }

@@ -8,40 +8,99 @@
     <title>Image Editor</title>
 
     <script src="https://code.angularjs.org/1.6.9/angular.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="/css/style.css">
-    <script src="/javascript/app.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <script src="javascript/app.js"></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 </head>
 <body ng-controller="mainController">
-    <div class="container">
-        <div class="canvas-wrapper">
-            <canvas id="canvas" class="canvas">This text is displayed if your browser does not support HTML5 Canvas.</canvas>
-        </div>
+    <div class="canvas-container">
+        <canvas id="canvas" class="canvas"></canvas>
         
         
         <div
             ng-controller="dragController"   
-            id="toolbar" 
-            class="tool-bar">
-            <div id="toolbarheader" class="drag-header">Click here to drag <button ng-click="minimise('toolbar')">-</button></div> 
-            Tool Bar
-        </div>
-
-        <div 
-            ng-controller="dragController"
             id="controller" 
             class="controller">
+            <div id="controllerheader" class="drag-header" ><button class="float: right;" ng-click="minimise('controller')">X</button></div> 
+            <button 
+                ng-repeat="(key, value) in showControllers"
+                ng-click="openController(key)">
+                    <strong>{{ key }}</strong>
+            </button>
             <div 
-                id="controllerheader" 
-                class="drag-header">
-                Controller
-                <button ng-click="minimise('controller')">-</button> 
-            </div> 
+                style="height: 200px; width: 200px; padding: 30px">
 
-            Import: <input 
-                type="file" 
-                id="imgFile" 
-                accept=".png, .jpg, .jpeg" 
-                onchange="angular.element(this).scope().importImg(event)">
+                <!-- Text: text options goes here --> 
+                <div ng-show="showControllers.Text">
+                    <div class="row">
+                        <input 
+                            type="text" 
+                            ng-model="state.textString"
+                            class="text"
+                            placeholder="Text">
+                    </div>
+                    <div class="row">
+                        <input 
+                            type="number"
+                            ng-model="state.fontSize">
+                    </div>
+                    <div class="row">
+                        <select 
+                            ng-options="font for font in state.fonts" 
+                            ng-init="state.font = state.fonts[0]"
+                            ng-model="state.font" ng-change="updateFont()"></select>
+                    </div>
+                    <div class="row">
+                        <input 
+                            type="color" 
+                            ng-model="state.fontColor">
+                    </div>
+                    <div class="row">
+                        <button 
+                            ng-click="addText(20, 20)" 
+                            class="btn btn-success">Add Text</button>
+                    </div>
+                </div>
+
+                <!-- Layers: layers options goes here -->
+                <div 
+                    ng-show="showControllers.Layers"
+                    class="row"
+                    ng-repeat="(key, value) in $parent.state.layers">
+                        <canvas 
+                        id="{{key}}Layer"
+                        width="100" 
+                        height="80">
+                        </canvas>
+                </div>
+                
+
+            </div>
+        </div>
+
+       
+    </div>
+    <div class="toolbar-container">
+        <div class="toolbar">
+            <label title="Import background" style="cursor: pointer;">
+                <input 
+                    type="file" 
+                    style="display: none;"
+                    id="imgFile" 
+                    accept=".png, .jpg, .jpeg" 
+                    onchange="angular.element(this).scope().importImg(event)"/>
+                <span class="glyphicon glyphicon-import"></span>
+            </label>
+           <button title="Save"><span class="glyphicon glyphicon-floppy-disk"></span></button>
+           <button title="Upload JSON"><span class="glyphicon glyphicon-upload"></span></button>
+           <button title="Download JSON"><span class="glyphicon glyphicon-download-alt"></span></button>
+           <button title="Redo"><span class="glyphicon glyphicon-circle-arrow-left"></span></button>
+           <button title="Undo"><span class="glyphicon glyphicon-circle-arrow-right"></span></button>
+           |
+           <button title="Crop (Situational when image is selected it will show?)"><span class="glyphicon glyphicon-circle-arrow-right"></span></button>
         </div>
     </div>
 

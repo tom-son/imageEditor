@@ -19,8 +19,6 @@ body {
     background-image: url("../assets/checkers.png");
     background-repeat: repeat;
     padding: 0;
-    height: 605px;
-    width: 900px;
     margin: auto;
     display: block;
     position: absolute;

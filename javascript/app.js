@@ -16,6 +16,10 @@ function($scope){
 
         },
         layers: [],
+        clipArt: [
+            "heart-clipart.png"
+        ],
+        scale: 1,
         dragOk: false,
         startX: 0,
         startY: 0
@@ -26,9 +30,6 @@ function($scope){
     $scope.importImg = function(event) {
         console.log("importimg clicked")
         var file = document.getElementById("imgFile").files[0];
-        var canvas = document.getElementById("canvas");
-        var ctx = canvas.getContext("2d");
-
         // FileReader to read the image.
         var fr = new FileReader();
         // Image to get meta data on image such as size.
@@ -59,6 +60,7 @@ function($scope){
         canvas.width = image.width;
         canvas.height = image.height;
         console.log("width: ", image.width, ", height: ", image.height);
+        console.log(canvas);
     }
 
     // INFO: paintCanvas() must be envoked everytime you add a new layer.
@@ -68,14 +70,14 @@ function($scope){
         var ctx = canvas.getContext("2d");
 
         $scope.clearCanvas();
-        
+        ctx.scale($scope.state.scale, $scope.state.scale);
         ctx.drawImage($scope.state.backgroundImg,0,0);
 
         var layers = $scope.state.layers;
         for (var i=0; i < layers.length; i++){
+            var config = layers[i].config;
             switch(layers[i].type){
                 case "fillText":
-                    var config = layers[i].config;
                     ctx.font = config.font;
                     ctx.fillStyle = config.colour;
                     ctx.fillText(
@@ -83,15 +85,29 @@ function($scope){
                         config.x,
                         config.y);
                     break;
+                case "clipArt":;
+                    // Image to get meta data on image such as size.
+                    var image = new Image();
+                    image.onload = function(event) {
+                        // store image into layers.
+                        
+                        ctx.drawImage(
+                            image,
+                            config.x,
+                            config.y
+                        );
+                    }
+                    image.src = config.filename;
+                    console.log("done with clipart adding");
+                    break;
             }
         }
 
 
-
-
+        // Temparary position for testing
         $scope.paintLayers();
     }
-
+    // Paint the layers in controller section.
     $scope.paintLayers = function() {
         setTimeout(function() {
             $scope.state.layers.forEach(function(element, index) {
@@ -103,17 +119,32 @@ function($scope){
                 var canvas = document.getElementById(index+"Layer");
                 canvas.style ="background: white;"
                 var ctx = canvas.getContext("2d");
-    
-    
+                var config = element.config;
+
                 switch(element.type){
+                    
                     case "fillText":
-                        var config = element.config;
+                        
                         ctx.font = config.font;
                         ctx.fillStyle = config.colour;
                         ctx.fillText(
                             config.string,
                             config.x,
                             config.y);
+                        break;
+                    case "clipArt":
+                        // Image to get meta data on image such as size.
+                        var image = new Image();
+                        image.onload = function(event) {
+                            // store image into layers.
+                            ctx.drawImage(
+                                image,
+                                config.x,
+                                config.y
+                            );
+                        }
+                        image.src = config.filename;
+                        console.log("done with clipart adding");
                         break;
                 }
     
@@ -122,9 +153,23 @@ function($scope){
         
     }
 
+    // Set scale number for zoom functionality.
+    $scope.zoomHandler = function(zoom) {
+
+        $scope.state.scale = 1;
+        if(zoom === "in") {
+            $scope.state.scale = ($scope.state.scale * 1.1).toFixed(1);
+        } else if(zoom === "out") {
+
+            $scope.state.scale = ($scope.state.scale / 1.1).toFixed(1);
+        }
+        $scope.paintCanvas();
+        console.log($scope.state.scale);
+        $scope.state.scale = 1;
+    }
 
 
-    $scope.addText = function(xpos, ypos) {
+    $scope.addTextHandler = function(xpos, ypos) {
         $scope.state.layers.push({
             type: "fillText",
             config: {
@@ -140,10 +185,44 @@ function($scope){
     }
 
     
-    $scope.updateFont = function() {
-        console.log($scope.state.font);
-        console.log($scope.state.fontColor);
+    $scope.addClipArtHandler = function(filename) {
+        console.log(filename);
+        // store image into layers.
+        $scope.state.layers.push({
+            type: "clipArt",
+            config: {
+                filename: filename,
+                x: 20,
+                y: 20 
+            }
+        });
+        $scope.paintCanvas();
     }
+
+    $scope.addImageHandler = function(event) {
+        var file = document.getElementById("addImgFile").files[0];
+        // FileReader to read the image.
+        var fr = new FileReader();
+        // Image to get meta data on image such as size.
+        var image = new Image();
+
+        fr.onload = function(event) {
+            image.onload = function(event) {
+                // store image into layers.
+                $scope.state.layers.push({
+                    type: "drawImage",
+                    config: {
+                                                                   // What to do with image and where to store it.
+                    }
+                });
+                $scope.paintCanvas();
+            }
+            image.src = event.target.result;
+        }
+        fr.readAsDataURL(file);  
+        
+    }
+
 
     // Set nessesary values in scope to default. 
     $scope.setDefaultValues = function() {
@@ -154,6 +233,10 @@ function($scope){
    
 
 
+    $scope.updateFont = function() {
+        console.log($scope.state.font);
+        console.log($scope.state.fontColor);
+    }
 
 
 
@@ -314,9 +397,10 @@ function($scope){
 editApp.controller('dragController', ['$scope',
 function($scope){
     $scope.showControllers = {
-        Image: false,
+        Layers: false,
         Text: false,
-        Layers: false
+        Image: false,
+        "Clip Art": false
     };
 
 

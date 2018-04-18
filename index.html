@@ -6,14 +6,17 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
     <title>Image Editor</title>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
 
     <script src="https://code.angularjs.org/1.6.9/angular.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="css/style.css">
     <script src="javascript/app.js"></script>
 
+    <!-- Bootstrap and Icons -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <!-- Google Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body ng-controller="mainController">
     <div class="canvas-container">
@@ -31,7 +34,20 @@
                     <strong>{{ key }}</strong>
             </button>
             <div 
-                style="height: 200px; width: 200px; padding: 30px">
+                style="height: 400px;  padding: 30px">
+
+                <!-- Layers: layers options goes here -->
+                <div 
+                    ng-show="showControllers.Layers"
+                    class="row"
+                    ng-repeat="(key, value) in $parent.state.layers">
+                        <canvas 
+                        id="{{key}}Layer"
+                        width="100" 
+                        height="80">
+                        </canvas>
+                </div>
+
 
                 <!-- Text: text options goes here --> 
                 <div ng-show="showControllers.Text">
@@ -60,23 +76,46 @@
                     </div>
                     <div class="row">
                         <button 
-                            ng-click="addText(20, 20)" 
+                            ng-click="addTextHandler(10, 30)" 
                             class="btn btn-success">Add Text</button>
                     </div>
                 </div>
 
-                <!-- Layers: layers options goes here -->
-                <div 
-                    ng-show="showControllers.Layers"
-                    class="row"
-                    ng-repeat="(key, value) in $parent.state.layers">
-                        <canvas 
-                        id="{{key}}Layer"
-                        width="100" 
-                        height="80">
-                        </canvas>
+                <!-- Image: image options goes here -->
+                <div ng-show="showControllers.Image">
+                    <div class="row">
+                        <label title="Add image" style="cursor: pointer;">
+                            <input 
+                                type="file" 
+                                id="addImgFile" 
+                                accept=".png, .jpg, .jpeg"
+                                style="width: 170px;"/>
+                        </label>
+                    </div>
+                    <div class="row">
+                        <button 
+                            class="btn btn-success" 
+                            ng-click="addImageHandler($scope)">
+                                Add Image
+                        </button>
+                    </div>
                 </div>
-                
+
+                <!-- Clip Art -->
+                <div 
+                    ng-show="showControllers['Clip Art']"
+                    class="row"
+                    ng-repeat="(key, value) in $parent.state.clipArt"
+                    ng-click="addClipArtHandler(value)">
+                        <canvas 
+                        id="{{value}}"
+                        width="100" 
+                        height="80"
+                        style="background:red;">
+                        </canvas> <br>
+                        click red clipart
+                </div>
+                </div>
 
             </div>
         </div>
@@ -100,7 +139,15 @@
            <button title="Redo"><span class="glyphicon glyphicon-circle-arrow-left"></span></button>
            <button title="Undo"><span class="glyphicon glyphicon-circle-arrow-right"></span></button>
            |
-           <button title="Crop (Situational when image is selected it will show?)"><span class="glyphicon glyphicon-circle-arrow-right"></span></button>
+           <button 
+                title="Zoom-Out"
+                ng-click="zoomHandler('out')"><span class="glyphicon glyphicon-zoom-out"></span></button>
+           <button 
+                title="Zoom-In"
+                ng-click="zoomHandler('in')">
+                    <span class="glyphicon glyphicon-zoom-in"></span>
+            </button>
+           <!-- <button title="Crop (Situational when image is selected it will show?)"><span class="glyphicon glyphicon-circle-arrow-right"></span></button> -->
         </div>
     </div>
 

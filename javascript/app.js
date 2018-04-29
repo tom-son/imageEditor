@@ -17,7 +17,8 @@ function($scope, $http){
         },
         layers: [],
         clipArt: [
-            "heart-clipart.png"
+            "heart-clipart.png",
+            "https://www.shareicon.net/data/128x128/2017/04/04/882436_media_512x512.png"
         ],
         scale: 1,
         dragOk: false,
@@ -95,6 +96,7 @@ function($scope, $http){
             var config = layers[i].config;
             switch(layers[i].type){
                 case "fillText":
+                    ctx.textBaseline="bottom"; 
                     ctx.font = config.font;
                     ctx.fillStyle = config.colour;
                     ctx.fillText(
@@ -102,12 +104,13 @@ function($scope, $http){
                         config.x,
                         config.y);
                     break;
+
+                                                                        // something to do with scope or closure
+                                                                        // https://stackoverflow.com/questions/40835652/issue-drawing-multiple-images-on-canvas-with-drawimage
                 case "clipArt":;
-                    // Image to get meta data on image such as size.
+                    // Image: turn filename into image.
                     var image = new Image();
                     image.onload = function(event) {
-                        // store image into layers.
-                        
                         ctx.drawImage(
                             image,
                             config.x,
@@ -273,20 +276,27 @@ function($scope, $http){
         var ctx = canvas.getContext("2d");
 
         
-        var x, y, width, height, config = $scope.state.layers[element].config;
+        var x, y, w, h, config = $scope.state.layers[element].config;
         x = config.x;
         y = config.y;
         w = config.width;
         h = config.height;
-        // 0
+        // 0 top-left
         $scope.drawDragPoint(x, y);
-        // 1
+        // 1 top
+        $scope.drawDragPoint(x + (w / 2), y);
+        // 2 top-right
         $scope.drawDragPoint(x + w, y);
-        // 2
+        // 3 right
+        $scope.drawDragPoint(x + w, y + (h /2));
+        // 4 bottom-right
         $scope.drawDragPoint(x + w, y + h);
-        // 3
+        // 5 bottom
+        $scope.drawDragPoint(x + (w / 2), y + h);
+        // 6 bottom-left
         $scope.drawDragPoint(x , y + h);
-    
+        // 7 left
+        $scope.drawDragPoint(x, y + (h / 2));
     }
 
     $scope.drawDragPoint = function(x, y) {
@@ -357,26 +367,49 @@ function($scope, $http){
         if (dx * dx + dy * dy <= resizerRadius2) {
             return (0);
         }
+        // top
+        dx = mx - ( config.x + (config.width / 2) );
+        dy = my - ( config.y)
+        if (dx * dx + dy * dy <= resizerRadius2) {
+            return (1);
+        }
         // top-right
         dx = mx - (config.x + config.width);
         dy = my - config.y;
         if (dx * dx + dy * dy <= resizerRadius2) {
-            return (1);
+            return (2);
+        }
+        // right
+        dx = mx - (config.x + config.width);
+        dy = my - ( config.y + (config.height / 2) );
+        if (dx * dx + dy * dy <= resizerRadius2) {
+            return (3);
         }
         // bottom-right
         dx = mx - (config.x + config.width);
         dy = my - (config.y + config.height);
         if (dx * dx + dy * dy <= resizerRadius2) {
-            return (2);
+            return (4);
+        }
+        // bottom
+        dx = mx - ( config.x + (config.width / 2) );
+        dy = my - (config.y + config.height);
+        if (dx * dx + dy * dy <= resizerRadius2) {
+            return (5);
         }
         // bottom-left
         dx = mx - config.x;
         dy = my - (config.y + config.height);
         if (dx * dx + dy * dy <= resizerRadius2) {
-            return (3);
+            return (6);
+        }
+        // left
+        dx = mx - config.x;
+        dy = my - (config.y + (config.height / 2) );
+        if (dx * dx + dy * dy <= resizerRadius2) {
+            return (7);
         }
         return (-1);
-    
     }
     
 
@@ -484,21 +517,39 @@ function($scope, $http){
                         config.height -= dy;
                         break;
                     case 1:
-                        //top-right
+                        // top
+                        config.height -= dy;
+                        config.y = my;
+                        break;
+                    case 2:
+                        // top-right
                         config.y = my;
                         config.width += dx;
                         config.height -= dy;
                         break;
-                    case 2:
-                        //bottom-right
+                    case 3:
+                        // right
+                        config.width += dx;
+                        break;
+                    case 4:
+                        // bottom-right
                         config.width = mx - config.x;
                         config.height = my - config.y;
                         break;
-                    case 3:
-                        //bottom-left
+                    case 5:
+                        // bottom
+                        config.height += dy;
+                        break;
+                    case 6:
+                        // bottom-left
                         config.x = mx;
                         config.width -= dx;
                         config.height += dy;
+                        break;
+                    case 7:
+                        // bottom-left
+                        config.x += dx;
+                        config.width -= dx;
                         break;
                 }
             }

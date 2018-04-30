@@ -148,12 +148,15 @@
            <button 
                 title="Zoom-Out"
                 ng-click="zoomHandler('out')"><span class="glyphicon glyphicon-zoom-out"></span></button>
-            {{ state.scale }}
            <button 
                 title="Zoom-In"
                 ng-click="zoomHandler('in')">
                     <span class="glyphicon glyphicon-zoom-in"></span>
             </button>
+            |
+            <button 
+                title="Rotate"
+                ng-click="addRotateHandler(90)">Rotate</span></button>
            <!-- <button title="Crop (Situational when image is selected it will show?)"><span class="glyphicon glyphicon-circle-arrow-right"></span></button> -->
         </div>
     </div>

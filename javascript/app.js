@@ -31,6 +31,18 @@ function($scope, $http){
     };
 
 
+    $scope.clickMe = function() 
+    {
+        console.log("Clicked");
+        var data = 1;
+        $http.post('http://121.44.70.213:81/textEditor/jsonSave.php', data, null)
+            .then(function(){
+
+            });
+    }
+
+
+
     // Event handle which w ill be attached to onchange event 
     // listener of "choose file" (import) button.
     $scope.importImg = function(event) {
@@ -92,23 +104,26 @@ function($scope, $http){
                         config.x,
                         config.y);
                     break;
-
-                                                                        // Solution
-                                                                        // something to do with scope or closure or
-                                                                        // paint only what is moved
-                                                                        // https://stackoverflow.com/questions/40835652/issue-drawing-multiple-images-on-canvas-with-drawimage
                 case "clipArt":
                     // Image: turn filename into image.
                     let image = new Image();
                     image.onload = (function(config, image) {
                         return function() {
+
+                            //attempt to rotate however when we rotate we need to update co-ord, drag points etc.
+                            ctx.save();
+                            ctx.translate(config.x + (config.width /2), config.y+ (config.width /2));
+                            ctx.moveTo(0,0);
+                            ctx.rotate(config.rotate * (Math.PI / 180));
                             ctx.drawImage(
                                 image,
-                                config.x,
-                                config.y,
+                                -(config.x+(config.width/2)),
+                                -(config.y + (config.height/2)),
                                 config.width,
                                 config.height
                             );
+                            // ctx.translate((config.x + (config.width /2)), (config.y+ (config.width /2)));
+                            ctx.restore();
                         }
                     })(config, image);
                     image.src = config.filename;
@@ -120,7 +135,7 @@ function($scope, $http){
 
         // when something is clicked check if element was clicked and if so draw points
         if($scope.state.clickedItem > -1) {
-            $scope.drawResizePoints($scope.state.clickedItem);
+            $scope.drawResizePoints($scope.state.layers[$scope.state.clickedItem]);
         }
     }
 
@@ -130,7 +145,6 @@ function($scope, $http){
     $scope.paintLayers = function() {
         setTimeout(function() {
             $scope.state.layers.forEach(function(element, index) {
-                console.log("painting layers: ", index + "Layer");
                 var id = index + "Layer";
 
     
@@ -163,7 +177,6 @@ function($scope, $http){
                             );
                         }
                         image.src = config.filename;
-                        console.log("done with clipart adding");
                         break;
                 }
     
@@ -216,7 +229,9 @@ function($scope, $http){
                 x: 20,
                 y: 20,
                 width: 260,
-                height: 260
+                height: 260,
+                // image rotate in degrees
+                rotate: 360
             }
         });
         $scope.paintCanvas();
@@ -246,6 +261,14 @@ function($scope, $http){
         
     }
 
+    $scope.addRotateHandler = function(degrees) {
+        if($scope.state.clickedItem > -1) {
+            $scope.state.layers[$scope.state.clickedItem].config.rotate += degrees;
+        }
+        $scope.paintCanvas();
+    }
+
+
 
     // Set nessesary values in scope to default. 
     $scope.setDefaultValues = function() {
@@ -269,11 +292,13 @@ function($scope, $http){
         var ctx = canvas.getContext("2d");
 
         
-        var x, y, w, h, config = $scope.state.layers[element].config;
+        var x, y, w, h, config = element.config;
         x = config.x;
         y = config.y;
         w = config.width;
         h = config.height;
+
+        
         // 0 top-left
         $scope.drawDragPoint(x, y);
         // 1 top
@@ -301,7 +326,7 @@ function($scope, $http){
         ctx.closePath();
         ctx.fill();
     }
-
+    
   
     $scope.itemsHitTest = function(mx, my) {
         console.log("elementHitTest()");

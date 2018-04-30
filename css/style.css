@@ -35,14 +35,12 @@ body {
     cursor: move;
     z-index: 10;
     background-color: #167DA6;
-
+    min-width: 170px;
 }
 .controller {
     position: absolute;
     z-index: 9;
     border: 1px solid #d3d3d3;
-    right: 0px;
-    top: 25%;
     background-color: #444444;
     border: 1px solid #000;
 }

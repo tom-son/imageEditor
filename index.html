@@ -27,7 +27,7 @@
             id="layers" 
             class="controller">
             
-            <div id="layersheader" class="drag-header" ><button class="float: right;" ng-click="minimise('controller')">X</button></div> 
+            <div id="layersheader" class="drag-header" ><button  ng-click="minimise('controller')">X</button></div> 
             <!-- Layers: layers options goes here -->
             <div 
             class="row"
@@ -45,7 +45,7 @@
             id="controller" 
             class="controller">
 
-            <div id="controllerheader" class="drag-header" ><button class="float: right;" ng-click="minimise('controller')">X</button></div> 
+            <div id="controllerheader" class="drag-header" ><button ng-click="minimise('controller')">X</button></div> 
             <button
                 ng-repeat="(key, value) in showControllers"
                 ng-click="openController(key)"
@@ -122,7 +122,6 @@
                         </canvas> <br>
                         click red clipart
                 </div>
-                </div>
 
             </div>
         </div>
@@ -149,6 +148,7 @@
            <button 
                 title="Zoom-Out"
                 ng-click="zoomHandler('out')"><span class="glyphicon glyphicon-zoom-out"></span></button>
+            {{ state.scale }}
            <button 
                 title="Zoom-In"
                 ng-click="zoomHandler('in')">

@@ -27,20 +27,8 @@ function($scope, $http){
         // Set to the item that was clicked otherwise -1.
         clickedItem: -1,
         resizePoint: -1,
-        resizerRadius: 10
+        resizerRadius: 5
     };
-
-
-    $scope.clickMe = function() 
-    {
-        console.log("Clicked");
-        var data = 1;
-        $http.post('http://121.44.70.213:81/textEditor/jsonSave.php', data, null)
-            .then(function(){
-
-            });
-    }
-
 
 
     // Event handle which w ill be attached to onchange event 
@@ -105,21 +93,26 @@ function($scope, $http){
                         config.y);
                     break;
 
-                                                                        // something to do with scope or closure
+                                                                        // Solution
+                                                                        // something to do with scope or closure or
+                                                                        // paint only what is moved
                                                                         // https://stackoverflow.com/questions/40835652/issue-drawing-multiple-images-on-canvas-with-drawimage
-                case "clipArt":;
+                case "clipArt":
                     // Image: turn filename into image.
-                    var image = new Image();
-                    image.onload = function(event) {
-                        ctx.drawImage(
-                            image,
-                            config.x,
-                            config.y,
-                            config.width,
-                            config.height
-                        );
-                    }
+                    let image = new Image();
+                    image.onload = (function(config, image) {
+                        return function() {
+                            ctx.drawImage(
+                                image,
+                                config.x,
+                                config.y,
+                                config.width,
+                                config.height
+                            );
+                        }
+                    })(config, image);
                     image.src = config.filename;
+
                     break;
             }
         }

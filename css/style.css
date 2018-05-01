@@ -10,10 +10,9 @@ body {
 .canvas-container {
     height: 95%;
     background-color: #191919;
+    overflow: scroll;
 }
 
-.canvas-wrapper {
-}
 
 .canvas {
     background-image: url("../assets/checkers.png");
@@ -21,14 +20,21 @@ body {
     padding: 0;
     margin: auto;
     display: block;
-    position: absolute;
-    top: 0;
+    /* position: absolute; */
+    /* top: 0;
     bottom: 0;
     left: 0;
-    right: 0;
+    right: 0; */
     border: 1px solid red;
     /* background-color: black;  */
 }
+
+
+
+
+
+
+
 
 
 .drag-header {
@@ -51,7 +57,7 @@ body {
 }
 
 .toolbar {
-width: 500px;
+    width: 800px;
 }
 
 /* turn off all button type styling for now */

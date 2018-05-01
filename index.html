@@ -28,7 +28,7 @@
             class="controller">
             
             <div id="layersheader" class="drag-header" ><button  ng-click="minimise('controller')">X</button></div> 
-            <!-- Layers: layers options goes here -->
+            <!-- Layers: layers options goes here  -->
             <div 
             class="row"
             ng-repeat="(key, value) in $parent.state.layers">
@@ -57,7 +57,7 @@
                 style="height: 400px; padding: 30px">
 
 
-                <!-- Text: text options goes here --> 
+                <!-- Text: text options goes here   -->
                 <div ng-show="showControllers.Text">
                     <div class="row">
                         <input 
@@ -89,7 +89,7 @@
                     </div>
                 </div>
 
-                <!-- Image: image options goes here -->
+                <!-- Image: image options goes here  -->
                 <div ng-show="showControllers.Image">
                     <div class="row">
                         <label title="Add image" style="cursor: pointer;">
@@ -109,7 +109,7 @@
                     </div>
                 </div>
 
-                <!-- Clip Art -->
+                <!-- Clip Art  -->
                 <div 
                     ng-show="showControllers['Clip Art']"
                     class="row"
@@ -128,6 +128,8 @@
 
        
     </div>
+
+    
     <div class="toolbar-container">
         <div class="toolbar">
             <label title="Import background" style="cursor: pointer;">
@@ -148,6 +150,8 @@
            <button 
                 title="Zoom-Out"
                 ng-click="zoomHandler('out')"><span class="glyphicon glyphicon-zoom-out"></span></button>
+            
+                {{state.scale}}
            <button 
                 title="Zoom-In"
                 ng-click="zoomHandler('in')">
@@ -155,7 +159,7 @@
             </button>
             |
             <button 
-                title="Rotate"
+                title="Rotate: When an item is clicked!"
                 ng-click="addRotateHandler(90)">Rotate</span></button>
            <!-- <button title="Crop (Situational when image is selected it will show?)"><span class="glyphicon glyphicon-circle-arrow-right"></span></button> -->
         </div>

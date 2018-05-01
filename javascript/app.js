@@ -31,17 +31,6 @@ function($scope, $http){
     };
 
 
-    $scope.clickMe = function() 
-    {
-        console.log("Clicked");
-        var data = 1;
-        $http.post('http://121.44.70.213:81/textEditor/jsonSave.php', data, null)
-            .then(function(){
-
-            });
-    }
-
-
 
     // Event handle which w ill be attached to onchange event 
     // listener of "choose file" (import) button.
@@ -64,6 +53,41 @@ function($scope, $http){
         }
         fr.readAsDataURL(file);  
     }    
+
+        // Set scale number for zoom functionality.
+        $scope.zoomHandler = function(zoom) {
+            var ctx = document.getElementById('canvas').getContext('2d');
+            var scaleToFixed;
+
+            var adjust = function(scale){
+                var canvas = document.getElementById('canvas');
+                
+                var adjustedWidth = $scope.state.backgroundImg.width * scale;
+                var adjustedHeight = $scope.state.backgroundImg.height * scale;
+                console.log(scale, $scope.state.backgroundImg.width, $scope.state.backgroundImg.height, adjustedWidth, adjustedHeight);
+                canvas.width = adjustedWidth;
+                canvas.height = adjustedHeight;
+
+            }
+            // $scope.state.scale = 1;
+            if(zoom === "in") {
+                
+                $scope.state.scale += 0.1;
+                scaleToFixed = Number($scope.state.scale.toFixed(1));
+                adjust(scaleToFixed);
+                
+            } else if(zoom === "out") {
+                $scope.state.scale -= 0.1;
+                
+                // $scope.state.scale = ($scope.state.scale / 1.1).toFixed(1);
+                scaleToFixed = Number($scope.state.scale.toFixed(1));
+                adjust(scaleToFixed);
+            }
+            ctx.scale(scaleToFixed, scaleToFixed);
+            $scope.paintCanvas();
+            // console.log($scope.state.scale);
+            // $scope.state.scale = 1;
+        }
 
     // Clear canvas to removing all canvas drawing.
     $scope.clearCanvas = function() {
@@ -88,7 +112,9 @@ function($scope, $http){
         var ctx = canvas.getContext("2d");
 
         $scope.clearCanvas();
-        ctx.scale($scope.state.scale, $scope.state.scale);
+        var scaleToFixed = $scope.state.scale.toFixed(1);
+        console.log("scale at paint level ", scaleToFixed);
+        // ctx.scale(scaleToFixed, scaleToFixed);
         ctx.drawImage($scope.state.backgroundImg,0,0);
 
         var layers = $scope.state.layers;
@@ -185,21 +211,6 @@ function($scope, $http){
         
     }
 
-    // Set scale number for zoom functionality.
-    $scope.zoomHandler = function(zoom) {
-
-        $scope.state.scale = 1;
-        if(zoom === "in") {
-            $scope.state.scale = ($scope.state.scale * 1.1).toFixed(1);
-        } else if(zoom === "out") {
-
-            $scope.state.scale = ($scope.state.scale / 1.1).toFixed(1);
-        }
-        $scope.paintCanvas();
-        console.log($scope.state.scale);
-        $scope.state.scale = 1;
-    }
-
 
     $scope.addTextHandler = function(xpos, ypos) {
         $scope.state.layers.push({
@@ -231,7 +242,7 @@ function($scope, $http){
                 width: 260,
                 height: 260,
                 // image rotate in degrees
-                rotate: 360
+                rotate: 0
             }
         });
         $scope.paintCanvas();

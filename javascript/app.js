@@ -27,7 +27,7 @@ function($scope, $http){
         // Set to the item that was clicked otherwise -1.
         clickedItem: -1,
         resizePoint: -1,
-        resizerRadius: 5
+        resizerRadius: 15
     };
 
 
@@ -54,44 +54,46 @@ function($scope, $http){
         fr.readAsDataURL(file);  
     }    
 
-        // Set scale number for zoom functionality.
-        $scope.zoomHandler = function(zoom) {
-            var ctx = document.getElementById('canvas').getContext('2d');
-            var scaleToFixed;
+    // Set scale number for zoom functionality.
+    $scope.zoomHandler = function(zoom) {
+        var ctx = document.getElementById('canvas').getContext('2d');
+        var scaleToFixed;
 
-            var adjust = function(scale){
-                var canvas = document.getElementById('canvas');
-                
-                var adjustedWidth = $scope.state.backgroundImg.width * scale;
-                var adjustedHeight = $scope.state.backgroundImg.height * scale;
-                console.log(scale, $scope.state.backgroundImg.width, $scope.state.backgroundImg.height, adjustedWidth, adjustedHeight);
-                canvas.width = adjustedWidth;
-                canvas.height = adjustedHeight;
+        var adjust = function(scale){
+            var canvas = document.getElementById('canvas');
+            
+            var adjustedWidth = $scope.state.backgroundImg.width * scale;
+            var adjustedHeight = $scope.state.backgroundImg.height * scale;
+            console.log(scale, $scope.state.backgroundImg.width, $scope.state.backgroundImg.height, adjustedWidth, adjustedHeight);
+            canvas.width = adjustedWidth;
+            canvas.height = adjustedHeight;
 
-            }
-            // $scope.state.scale = 1;
-            if(zoom === "in") {
-                
-                $scope.state.scale += 0.1;
-                scaleToFixed = Number($scope.state.scale.toFixed(1));
-                adjust(scaleToFixed);
-                
-            } else if(zoom === "out") {
-                $scope.state.scale -= 0.1;
-                
-                // $scope.state.scale = ($scope.state.scale / 1.1).toFixed(1);
-                scaleToFixed = Number($scope.state.scale.toFixed(1));
-                adjust(scaleToFixed);
-            }
-            ctx.scale(scaleToFixed, scaleToFixed);
-            $scope.paintCanvas();
-            // console.log($scope.state.scale);
-            // $scope.state.scale = 1;
         }
+        // $scope.state.scale = 1;
+        if(zoom === "in") {
+            
+            $scope.state.scale += 0.1;
+            scaleToFixed = Number($scope.state.scale.toFixed(1));
+            adjust(scaleToFixed);
+            
+        } else if(zoom === "out") {
+            if ($scope.state.scale > 0.2) { 
+                $scope.state.scale -= 0.1;
+            }
+            
+            
+            // $scope.state.scale = ($scope.state.scale / 1.1).toFixed(1);
+            scaleToFixed = Number($scope.state.scale.toFixed(1));
+            adjust(scaleToFixed);
+        }
+        ctx.scale(scaleToFixed, scaleToFixed);
+        $scope.paintCanvas();
+        // console.log($scope.state.scale);
+        // $scope.state.scale = 1;
+    }
 
     // Clear canvas to removing all canvas drawing.
-    $scope.clearCanvas = function() {
-        var canvas = document.getElementById("canvas");
+    $scope.clearCanvas = function(canvas) {
         var ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
@@ -105,59 +107,65 @@ function($scope, $http){
         console.log(canvas);
     }
 
+
+    $scope.paintElement = function(canvas, element) {
+        var ctx = canvas.getContext('2d');
+
+        elementConfig = element.config;
+        switch(element.type){
+            case "fillText":
+                ctx.textBaseline="bottom"; 
+                ctx.font = elementConfig.font;
+                ctx.fillStyle = elementConfig.colour;
+                ctx.fillText(
+                    elementConfig.string,
+                    elementConfig.x,
+                    elementConfig.y);
+                break;
+            case "clipArt":
+                // Image: turn filename into image.
+                let image = new Image();
+                image.onload = (function(elementConfig, image) {
+                    return function() {
+
+                        //attempt to rotate however when we rotate we need to update co-ord, drag points etc.
+                        ctx.save();
+                        $scope.rotateCanvas(element, ctx);
+                        ctx.drawImage(
+                            image,
+                            -(elementConfig.width/2),
+                            -(elementConfig.height/2),
+                            // -(elementConfig.x+(elementConfig.width/2)),
+                            // -(elementConfig.y + (elementConfig.height/2)),
+                            elementConfig.width,
+                            elementConfig.height
+                        );
+                        // ctx.translate((config.x + (config.width /2)), (config.y+ (config.width /2)));
+                        ctx.restore();
+                    }
+                })(elementConfig, image);
+                image.src = elementConfig.filename;
+
+                break;
+        }
+    }
+
     // INFO: paintCanvas() must be envoked everytime you add a new layer.
-    // Draw all the layers onto the canvas.
+    // Draw backgroundImg and all the layers onto the canvas with scale.
     $scope.paintCanvas = function() {
         var canvas = document.getElementById("canvas");
         var ctx = canvas.getContext("2d");
 
-        $scope.clearCanvas();
+        $scope.clearCanvas(canvas);
         var scaleToFixed = $scope.state.scale.toFixed(1);
-        console.log("scale at paint level ", scaleToFixed);
         // ctx.scale(scaleToFixed, scaleToFixed);
         ctx.drawImage($scope.state.backgroundImg,0,0);
 
         var layers = $scope.state.layers;
         for (var i=0; i < layers.length; i++){
-            var config = layers[i].config;
-            switch(layers[i].type){
-                case "fillText":
-                    ctx.textBaseline="bottom"; 
-                    ctx.font = config.font;
-                    ctx.fillStyle = config.colour;
-                    ctx.fillText(
-                        config.string,
-                        config.x,
-                        config.y);
-                    break;
-                case "clipArt":
-                    // Image: turn filename into image.
-                    let image = new Image();
-                    image.onload = (function(config, image) {
-                        return function() {
-
-                            //attempt to rotate however when we rotate we need to update co-ord, drag points etc.
-                            ctx.save();
-                            ctx.translate(config.x + (config.width /2), config.y+ (config.width /2));
-                            ctx.moveTo(0,0);
-                            ctx.rotate(config.rotate * (Math.PI / 180));
-                            ctx.drawImage(
-                                image,
-                                -(config.x+(config.width/2)),
-                                -(config.y + (config.height/2)),
-                                config.width,
-                                config.height
-                            );
-                            // ctx.translate((config.x + (config.width /2)), (config.y+ (config.width /2)));
-                            ctx.restore();
-                        }
-                    })(config, image);
-                    image.src = config.filename;
-
-                    break;
-            }
+            var element = layers[i];
+            $scope.paintElement(canvas, element);
         }
-
 
         // when something is clicked check if element was clicked and if so draw points
         if($scope.state.clickedItem > -1) {
@@ -171,40 +179,12 @@ function($scope, $http){
     $scope.paintLayers = function() {
         setTimeout(function() {
             $scope.state.layers.forEach(function(element, index) {
-                var id = index + "Layer";
-
-    
-    
+                // Layers: from layers option in html
                 var canvas = document.getElementById(index+"Layer");
-                canvas.style ="background: white;"
-                var ctx = canvas.getContext("2d");
-                var config = element.config;
+                canvas.style = "background: white;"
 
-                switch(element.type){
-                    
-                    case "fillText":
-                        
-                        ctx.font = config.font;
-                        ctx.fillStyle = config.colour;
-                        ctx.fillText(
-                            config.string,
-                            config.x,
-                            config.y);
-                        break;
-                    case "clipArt":
-                        // Image to get meta data on image such as size.
-                        var image = new Image();
-                        image.onload = function(event) {
-                            // store image into layers.
-                            ctx.drawImage(
-                                image,
-                                config.x,
-                                config.y
-                            );
-                        }
-                        image.src = config.filename;
-                        break;
-                }
+                $scope.clearCanvas(canvas);
+                $scope.paintElement(canvas, element);
     
             });
         },1500);
@@ -237,8 +217,8 @@ function($scope, $http){
             type: "clipArt",
             config: {
                 filename: filename,
-                x: 20,
-                y: 20,
+                x: 0,
+                y: 0,
                 width: 260,
                 height: 260,
                 // image rotate in degrees
@@ -296,36 +276,75 @@ function($scope, $http){
     }
 
 
+    // save context before use and restore after use
+    // e.g. 
+    // ctx.save();
+    // $scope.rotateCanvas();
+    // ctx.restore();
 
-      // Draw 8 resize points on the element in layers
-      $scope.drawResizePoints = function(element) {
+    $scope.rotateCanvas = function(element, ctx) {
+        var elementConfig = element.config;
+        // ctx.translate(elementConfig.x, elementConfig.y);
+        ctx.translate(elementConfig.x + (elementConfig.width /2), elementConfig.y+ (elementConfig.width /2));
+        // ctx.moveTo(0,0);
+        ctx.rotate(elementConfig.rotate * (Math.PI / 180));
+    }
+
+
+    // Draw 8 resize points on the element in layers
+    $scope.drawResizePoints = function(element) {
         var canvas = document.getElementById("canvas");
         var ctx = canvas.getContext("2d");
 
         
         var x, y, w, h, config = element.config;
-        x = config.x;
-        y = config.y;
+        x = config.width/2;
+        y = config.height/2;
         w = config.width;
         h = config.height;
 
-        
+        ctx.save();
+        $scope.rotateCanvas(element, ctx);
+
+
         // 0 top-left
-        $scope.drawDragPoint(x, y);
+        $scope.drawDragPoint( -(w/2), -(h/2) );
         // 1 top
-        $scope.drawDragPoint(x + (w / 2), y);
+        $scope.drawDragPoint( 0 , -(h/2) );
         // 2 top-right
-        $scope.drawDragPoint(x + w, y);
+        $scope.drawDragPoint( w/2 , -(h/2) );
         // 3 right
-        $scope.drawDragPoint(x + w, y + (h /2));
+        $scope.drawDragPoint( w/2 , 0 );
         // 4 bottom-right
-        $scope.drawDragPoint(x + w, y + h);
+        $scope.drawDragPoint( w/2 , h/2 );
         // 5 bottom
-        $scope.drawDragPoint(x + (w / 2), y + h);
+        $scope.drawDragPoint( 0 , h/2 );
         // 6 bottom-left
-        $scope.drawDragPoint(x , y + h);
+        $scope.drawDragPoint( -(w/2) , h/2 );
         // 7 left
-        $scope.drawDragPoint(x, y + (h / 2));
+        $scope.drawDragPoint( -(w/2) , 0 );
+
+        $scope.drawDragPoint( 0, 0 );
+        $scope.drawDragPoint( x, y);
+
+    // // 0 top-left
+    // $scope.drawDragPoint(x, y);
+    // // 1 top
+    // $scope.drawDragPoint(x + (w / 2), y);
+    // // 2 top-right
+    // $scope.drawDragPoint(x + w, y);
+    // // 3 right
+    // $scope.drawDragPoint(x + w, y + (h /2));
+    // // 4 bottom-right
+    // $scope.drawDragPoint(x + w, y + h);
+    // // 5 bottom
+    // $scope.drawDragPoint(x + (w / 2), y + h);
+    // // 6 bottom-left
+    // $scope.drawDragPoint(x , y + h);
+    // // 7 left
+    // $scope.drawDragPoint(x, y + (h / 2));
+
+        ctx.restore();
     }
 
     $scope.drawDragPoint = function(x, y) {
@@ -468,6 +487,7 @@ function($scope, $http){
         }
         console.log("clickedItem", $scope.state.clickedItem,"resizePint",$scope.state.resizePoint);
 
+        
 
 
         // Always paint to add and remove the drag points.
@@ -482,6 +502,7 @@ function($scope, $http){
     // Mouse move event handler to move items co-ord in layers array.
     $scope.mouseMove = function(event) {
         var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext('2d');
         var borderBox = canvas.getBoundingClientRect();
         var offsetX = borderBox.left;
         var offsetY = borderBox.top;
@@ -536,6 +557,9 @@ function($scope, $http){
                 && $scope.state.resizePoint > -1) {
                 
                 var config = $scope.state.layers[$scope.state.clickedItem].config;
+                
+                // ctx.save();
+                // $scope.rotateCanvas(layers[$scope.state.clickedItem], ctx);
                 // resize the image
                 switch ($scope.state.resizePoint) {
                     case 0:
@@ -580,9 +604,53 @@ function($scope, $http){
                         config.x += dx;
                         config.width -= dx;
                         break;
+
+                    // case 0:
+                    //     //top-left
+                    //     config.x = mx;
+                    //     config.width -= dx;
+                    //     config.y = my;
+                    //     config.height -= dy;
+                    //     break;
+                    // case 1:
+                    //     // top
+                    //     config.height -= dy;
+                    //     config.y = my;
+                    //     break;
+                    // case 2:
+                    //     // top-right
+                    //     config.y = my;
+                    //     config.width += dx;
+                    //     config.height -= dy;
+                    //     break;
+                    // case 3:
+                    //     // right
+                    //     config.width += dx;
+                    //     break;
+                    // case 4:
+                    //     // bottom-right
+                    //     config.width = mx - config.x;
+                    //     config.height = my - config.y;
+                    //     break;
+                    // case 5:
+                    //     // bottom
+                    //     config.height += dy;
+                    //     break;
+                    // case 6:
+                    //     // bottom-left
+                    //     config.x = mx;
+                    //     config.width -= dx;
+                    //     config.height += dy;
+                    //     break;
+                    // case 7:
+                    //     // bottom-left
+                    //     config.x += dx;
+                    //     config.width -= dx;
+                    //     break;
+                    
                 }
             }
-
+            // ctx.restore();
             // Redraw the scene with the new rect positions.
             $scope.paintCanvas();
 
@@ -612,6 +680,9 @@ function($scope, $http){
         // was used in paint canvas however might not be good there
         // as it paints way too many time.
         $scope.paintLayers();
+
+
+        console.log(layers[$scope.state.clickedItem].config);
     }
     
 

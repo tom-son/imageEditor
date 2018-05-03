@@ -285,7 +285,7 @@ function($scope, $http){
     $scope.rotateCanvas = function(element, ctx) {
         var elementConfig = element.config;
         // ctx.translate(elementConfig.x, elementConfig.y);
-        ctx.translate(elementConfig.x + (elementConfig.width /2), elementConfig.y+ (elementConfig.width /2));
+        ctx.translate(elementConfig.x + (elementConfig.width /2), elementConfig.y + (elementConfig.height /2));
         // ctx.moveTo(0,0);
         ctx.rotate(elementConfig.rotate * (Math.PI / 180));
     }
@@ -298,8 +298,8 @@ function($scope, $http){
 
         
         var x, y, w, h, config = element.config;
-        x = config.width/2;
-        y = config.height/2;
+        x = config.x;
+        y = config.y;
         w = config.width;
         h = config.height;
 
@@ -325,8 +325,10 @@ function($scope, $http){
         $scope.drawDragPoint( -(w/2) , 0 );
 
         $scope.drawDragPoint( 0, 0 );
+        ctx.restore();
         $scope.drawDragPoint( x, y);
-
+        $scope.drawDragPoint(x+(w/2),y+(h/2))
+        console.log("points x,y of element", x,y)
     // // 0 top-left
     // $scope.drawDragPoint(x, y);
     // // 1 top
@@ -344,7 +346,7 @@ function($scope, $http){
     // // 7 left
     // $scope.drawDragPoint(x, y + (h / 2));
 
-        ctx.restore();
+       
     }
 
     $scope.drawDragPoint = function(x, y) {
@@ -508,6 +510,7 @@ function($scope, $http){
         var offsetY = borderBox.top;
         var layers = $scope.state.layers;
 
+        
          // Get the current mouse position.
         var mx = parseInt(event.clientX-offsetX);
         var my = parseInt(event.clientY-offsetY);

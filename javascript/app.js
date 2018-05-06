@@ -27,7 +27,8 @@ function($scope, $http){
         // Set to the item that was clicked otherwise -1.
         clickedItem: -1,
         resizePoint: -1,
-        resizerRadius: 15
+        resizerRadius: 15,
+        crop: -1
     };
 
 
@@ -110,7 +111,6 @@ function($scope, $http){
 
     $scope.paintElement = function(canvas, element) {
         var ctx = canvas.getContext('2d');
-
         elementConfig = element.config;
         switch(element.type){
             case "fillText":
@@ -125,25 +125,39 @@ function($scope, $http){
             case "clipArt":
                 // Image: turn filename into image.
                 let image = new Image();
-                image.onload = (function(elementConfig, image) {
+                image.onload = (function(elementConfig, image, cropConfig) {
                     return function() {
 
                         //attempt to rotate however when we rotate we need to update co-ord, drag points etc.
                         ctx.save();
                         $scope.rotateCanvas(element, ctx);
                         ctx.drawImage(
+                            // Below only implements image with rotate however other one!                            
+
+                            // image,
+                            // -(elementConfig.width/2),
+                            // -(elementConfig.height/2),
+                            // // -(elementConfig.x+(elementConfig.width/2)),
+                            // // -(elementConfig.y + (elementConfig.height/2)),
+                            // elementConfig.width,
+                            // elementConfig.height,
+
+                            // Trying to implement image with rotate and crop
+
                             image,
+                            cropConfig.x,
+                            cropConfig.y,
+                            cropConfig.width,
+                            cropConfig.height,
                             -(elementConfig.width/2),
                             -(elementConfig.height/2),
-                            // -(elementConfig.x+(elementConfig.width/2)),
-                            // -(elementConfig.y + (elementConfig.height/2)),
                             elementConfig.width,
-                            elementConfig.height
+                            elementConfig.height,
                         );
                         // ctx.translate((config.x + (config.width /2)), (config.y+ (config.width /2)));
                         ctx.restore();
                     }
-                })(elementConfig, image);
+                })(elementConfig, image, element.cropConfig);
                 image.src = elementConfig.filename;
 
                 break;
@@ -164,13 +178,34 @@ function($scope, $http){
         var layers = $scope.state.layers;
         for (var i=0; i < layers.length; i++){
             var element = layers[i];
+            ctx.save();
+            $scope.rotateCanvas(element, ctx);
             $scope.paintElement(canvas, element);
+            ctx.restore();
         }
 
         // when something is clicked check if element was clicked and if so draw points
-        if($scope.state.clickedItem > -1) {
-            $scope.drawResizePoints($scope.state.layers[$scope.state.clickedItem]);
-        }
+        ctx.save();
+        $scope.rotateCanvas(layers[$scope.state.clickedItem], ctx);
+
+        if($scope.state.clickedItem > -1 
+            // && $scope.state.crop === -1
+        ) {
+
+            $scope.drawResizePoints($scope.state.layers[$scope.state.clickedItem].config);
+            var config = $scope.state.layers[$scope.state.clickedItem].config;            
+            $scope.drawDragPoint( config.x, config.y);
+            // $scope.drawDragPoint(config.x+(config.width/2),config.y+(config.height/2));
+
+            // else if Item is clicked and crop is selected
+        } 
+        // else if ($scope.state.clickedItem > -1 
+        //             && $scope.state.crop > -1) {
+        //     $scope.drawResizePoints($scope.state.layers[$scope.state.clickedItem].cropConfig);
+        // }
+        ctx.restore();
+        
+    
     }
 
 
@@ -217,12 +252,20 @@ function($scope, $http){
             type: "clipArt",
             config: {
                 filename: filename,
+                // configuration of image for drawImage
                 x: 0,
                 y: 0,
                 width: 260,
                 height: 260,
                 // image rotate in degrees
                 rotate: 0
+            },
+            // configuration for crop for drawImage
+            cropConfig: {
+                x: 0,
+                y: 0,
+                width: 260,
+                height: 260
             }
         });
         $scope.paintCanvas();
@@ -259,7 +302,18 @@ function($scope, $http){
         $scope.paintCanvas();
     }
 
+    $scope.cropHandler = function() {
+        if($scope.state.clickedItem > -1) {
+            $scope.state.crop = $scope.state.clickedItem;
+        }
+        console.log($scope.state.crop);
 
+        // $scope.state.layers[0].cropConfig.width = 200;
+        // $scope.state.layers[0].cropConfig.height = 200;
+        // $scope.state.layers[0].config.width = 200;
+        // $scope.state.layers[0].config.height = 200;
+        $scope.paintCanvas();
+    }
 
     // Set nessesary values in scope to default. 
     $scope.setDefaultValues = function() {
@@ -290,21 +344,17 @@ function($scope, $http){
         ctx.rotate(elementConfig.rotate * (Math.PI / 180));
     }
 
-
     // Draw 8 resize points on the element in layers
-    $scope.drawResizePoints = function(element) {
+    $scope.drawResizePoints = function(config) {
         var canvas = document.getElementById("canvas");
         var ctx = canvas.getContext("2d");
 
         
-        var x, y, w, h, config = element.config;
+        var x, y, w, h;
         x = config.x;
         y = config.y;
         w = config.width;
         h = config.height;
-
-        ctx.save();
-        $scope.rotateCanvas(element, ctx);
 
 
         // 0 top-left
@@ -324,10 +374,8 @@ function($scope, $http){
         // 7 left
         $scope.drawDragPoint( -(w/2) , 0 );
 
-        $scope.drawDragPoint( 0, 0 );
-        ctx.restore();
-        $scope.drawDragPoint( x, y);
-        $scope.drawDragPoint(x+(w/2),y+(h/2))
+
+        
         console.log("points x,y of element", x,y)
     // // 0 top-left
     // $scope.drawDragPoint(x, y);
@@ -459,9 +507,62 @@ function($scope, $http){
         if (dx * dx + dy * dy <= resizerRadius2) {
             return (7);
         }
+
+        
         return (-1);
     }
     
+    // Resize the config depending on which resizePoint.
+    $scope.resizeItem = function(config, resizePoint, mx, my, dx, dy) {
+        // var config = $scope.state.layers[$scope.state.clickedItem].config;
+        // ctx.save();
+        // $scope.rotateCanvas(layers[$scope.state.clickedItem], ctx);
+        // resize the image
+        switch ($scope.state.resizePoint) {
+            case 0:
+                //top-left
+                config.x = mx;
+                config.width -= dx;
+                config.y = my;
+                config.height -= dy;
+                break;
+            case 1:
+                // top
+                config.height -= dy;
+                config.y = my;
+                break;
+            case 2:
+                // top-right
+                config.y = my;
+                config.width += dx;
+                config.height -= dy;
+                break;
+            case 3:
+                // right
+                config.width += dx;
+                break;
+            case 4:
+                // bottom-right
+                config.width = mx - config.x;
+                config.height = my - config.y;
+                break;
+            case 5:
+                // bottom
+                config.height += dy;
+                break;
+            case 6:
+                // bottom-left
+                config.x = mx;
+                config.width -= dx;
+                config.height += dy;
+                break;
+            case 7:
+                // bottom-left
+                config.x += dx;
+                config.width -= dx;
+                break;
+        }
+    }
 
     // Mouse click event handler to check if mouse click co-ord
     // is within item co-ord in the config.
@@ -470,6 +571,9 @@ function($scope, $http){
         event.stopPropagation();
 
         var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext('2d');
+
+
         var borderBox = canvas.getBoundingClientRect();
         var offsetX = borderBox.left;
         var offsetY = borderBox.top;
@@ -484,13 +588,19 @@ function($scope, $http){
         $scope.state.dragOk = false;
 
         $scope.state.clickedItem = $scope.itemsHitTest(mx, my);
+
         if($scope.state.clickedItem > -1) {
             $scope.state.resizePoint = $scope.pointsHitTest(mx, my, $scope.state.clickedItem);
         }
-        console.log("clickedItem", $scope.state.clickedItem,"resizePint",$scope.state.resizePoint);
 
-        
+        // temp - testing for crop functionality. Turn off crop when no item are selected.
+        if($scope.state.clickedItem === -1) {
+            $scope.state.crop = -1;
+        }
 
+        console.log("clickedItem", $scope.state.clickedItem,"resizePint",$scope.state.resizePoint,"crop",$scope.state.crop);
+
+    
 
         // Always paint to add and remove the drag points.
         $scope.paintCanvas();
@@ -526,14 +636,9 @@ function($scope, $http){
             event.preventDefault();
             event.stopPropagation();
 
-           
-
-            
 
             // console.log(mx, my);
             // console.log(dx, dy);
-
-
 
             // Move each rect that isDragging 
             // by the distance the mouse has moved
@@ -553,105 +658,18 @@ function($scope, $http){
                 item.config.y+=dy;
             }
 
-
-
-            // if a item and points are selected resize
+            // if an item and resizePoints are selected and !crop then resize
             if ($scope.state.clickedItem > -1
-                && $scope.state.resizePoint > -1) {
+                && $scope.state.resizePoint > -1
+                && $scope.state.crop === -1) {
                 
-                var config = $scope.state.layers[$scope.state.clickedItem].config;
-                
-                // ctx.save();
-                // $scope.rotateCanvas(layers[$scope.state.clickedItem], ctx);
-                // resize the image
-                switch ($scope.state.resizePoint) {
-                    case 0:
-                        //top-left
-                        config.x = mx;
-                        config.width -= dx;
-                        config.y = my;
-                        config.height -= dy;
-                        break;
-                    case 1:
-                        // top
-                        config.height -= dy;
-                        config.y = my;
-                        break;
-                    case 2:
-                        // top-right
-                        config.y = my;
-                        config.width += dx;
-                        config.height -= dy;
-                        break;
-                    case 3:
-                        // right
-                        config.width += dx;
-                        break;
-                    case 4:
-                        // bottom-right
-                        config.width = mx - config.x;
-                        config.height = my - config.y;
-                        break;
-                    case 5:
-                        // bottom
-                        config.height += dy;
-                        break;
-                    case 6:
-                        // bottom-left
-                        config.x = mx;
-                        config.width -= dx;
-                        config.height += dy;
-                        break;
-                    case 7:
-                        // bottom-left
-                        config.x += dx;
-                        config.width -= dx;
-                        break;
-
-                    // case 0:
-                    //     //top-left
-                    //     config.x = mx;
-                    //     config.width -= dx;
-                    //     config.y = my;
-                    //     config.height -= dy;
-                    //     break;
-                    // case 1:
-                    //     // top
-                    //     config.height -= dy;
-                    //     config.y = my;
-                    //     break;
-                    // case 2:
-                    //     // top-right
-                    //     config.y = my;
-                    //     config.width += dx;
-                    //     config.height -= dy;
-                    //     break;
-                    // case 3:
-                    //     // right
-                    //     config.width += dx;
-                    //     break;
-                    // case 4:
-                    //     // bottom-right
-                    //     config.width = mx - config.x;
-                    //     config.height = my - config.y;
-                    //     break;
-                    // case 5:
-                    //     // bottom
-                    //     config.height += dy;
-                    //     break;
-                    // case 6:
-                    //     // bottom-left
-                    //     config.x = mx;
-                    //     config.width -= dx;
-                    //     config.height += dy;
-                    //     break;
-                    // case 7:
-                    //     // bottom-left
-                    //     config.x += dx;
-                    //     config.width -= dx;
-                    //     break;
-                    
-                }
+                $scope.resizeItem(layers[$scope.state.clickedItem].config, $scope.state.resizePoint, mx, my, dx, dy);
+                // if an item and resizePoints are selected and crop then crop
+            } else if($scope.state.clickedItem > -1
+                && $scope.state.resizePoint > -1
+                && $scope.state.crop >-1) {
+                    $scope.resizeItem(layers[$scope.state.clickedItem].config, $scope.state.resizePoint, mx, my, dx, dy);
+                    $scope.resizeItem(layers[$scope.state.clickedItem].cropConfig, $scope.state.resizePoint, mx, my, dx, dy);
             }
             // ctx.restore();
             // Redraw the scene with the new rect positions.

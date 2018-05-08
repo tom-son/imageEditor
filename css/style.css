@@ -82,3 +82,36 @@ button:hover {
 input[type="file"] {
     display: none;
 }
+
+
+
+
+
+/* Styling for home page */
+
+.home-background {
+    /* 
+        position: absolute;
+        Due to margin collapsing of edit-selection
+        Where the collapsed margin ends up outside the parent
+    */
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+
+    background-image: url("/assets/background-image.png"); 
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    /* filter: blur(1px); */
+
+    text-align: center;
+}
+
+.edit-selection {
+    width: 850px;
+    height: 400px;
+    padding: 160px 2% 0 2%;
+    margin: 10% auto;
+    background-color: rgba(22, 125, 166, 0.3);
+}

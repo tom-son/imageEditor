@@ -7,8 +7,9 @@
 
     <title>Image Editor</title>
     <link rel="stylesheet" type="text/css" href="css/style.css">
-
+    <!-- Angular and inject Route dependency -->
     <script src="https://code.angularjs.org/1.6.9/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-route.js"></script>
     <script src="javascript/app.js"></script>
 
     <!-- Bootstrap and Icons -->
@@ -18,156 +19,7 @@
     <!-- Google Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
-<body ng-controller="mainController">
-    <div class="canvas-container">
-        <canvas id="canvas" class="canvas"></canvas>
-        
-        <div
-            ng-controller="dragController"   
-            id="layers" 
-            class="controller">
-            
-            <div id="layersheader" class="drag-header" ><button  ng-click="minimise('controller')">X</button></div> 
-            <!-- Layers: layers options goes here  -->
-            <div 
-            class="row"
-            ng-repeat="(key, value) in $parent.state.layers">
-                <canvas 
-                    id="{{key}}Layer"
-                    width="100" 
-                    height="80">
-                </canvas>
-            </div>
-        </div>
-        
-        <div
-            ng-controller="dragController"   
-            id="controller" 
-            class="controller">
-
-            <div id="controllerheader" class="drag-header" ><button ng-click="minimise('controller')">X</button></div> 
-            <button
-                ng-repeat="(key, value) in showControllers"
-                ng-click="openController(key)"
-                style="color: white;">
-                    {{ key }}
-            </button>
-
-            <div 
-                style="height: 400px; padding: 30px">
-
-
-                <!-- Text: text options goes here   -->
-                <div ng-show="showControllers.Text">
-                    <div class="row">
-                        <input 
-                            type="text" 
-                            ng-model="state.textString"
-                            class="text"
-                            placeholder="Text">
-                    </div>
-                    <div class="row">
-                        <input 
-                            type="number"
-                            ng-model="state.fontSize">
-                    </div>
-                    <div class="row">
-                        <select 
-                            ng-options="font for font in state.fonts" 
-                            ng-init="state.font = state.fonts[0]"
-                            ng-model="state.font" ng-change="updateFont()"></select>
-                    </div>
-                    <div class="row">
-                        <input 
-                            type="color" 
-                            ng-model="state.fontColor">
-                    </div>
-                    <div class="row">
-                        <button 
-                            ng-click="addTextHandler(10, 30)" 
-                            class="btn btn-success">Add Text</button>
-                    </div>
-                </div>
-
-                <!-- Image: image options goes here  -->
-                <div ng-show="showControllers.Image">
-                    <div class="row">
-                        <label title="Add image" style="cursor: pointer;">
-                            <input 
-                                type="file" 
-                                id="addImgFile" 
-                                accept=".png, .jpg, .jpeg"
-                                style="width: 170px;"/>
-                        </label>
-                    </div>
-                    <div class="row">
-                        <button 
-                            class="btn btn-success" 
-                            ng-click="addImageHandler($scope)">
-                                Add Image
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Clip Art  -->
-                <div 
-                    ng-show="showControllers['Clip Art']"
-                    class="row"
-                    ng-repeat="(key, value) in $parent.state.clipArt"
-                    ng-click="addClipArtHandler(value)">
-                        <canvas 
-                        id="{{value}}"
-                        
-                        style="background:red;">
-                        </canvas> <br>
-                        click red clipart
-                </div>
-
-            </div>
-        </div>
-
-       
-    </div>
-
+<body ng-view>
     
-    <div class="toolbar-container">
-        <div class="toolbar">
-            <label title="Import background" style="cursor: pointer;">
-                <input 
-                    type="file" 
-                    style="display: none;"
-                    id="imgFile" 
-                    accept=".png, .jpg, .jpeg" 
-                    onchange="angular.element(this).scope().importImg(event)"/>
-                <span class="glyphicon glyphicon-import"></span>
-            </label>
-           <button title="Save"><span class="glyphicon glyphicon-floppy-disk"></span></button>
-           <button title="Upload JSON"><span class="glyphicon glyphicon-upload"></span></button>
-           <button title="Download JSON"><span class="glyphicon glyphicon-download-alt"></span></button>
-           <button title="Redo"><span class="glyphicon glyphicon-circle-arrow-left"></span></button>
-           <button title="Undo"><span class="glyphicon glyphicon-circle-arrow-right"></span></button>
-           |
-           <button 
-                title="Zoom-Out"
-                ng-click="zoomHandler('out')"><span class="glyphicon glyphicon-zoom-out"></span></button>
-            
-                {{state.scale}}
-           <button 
-                title="Zoom-In"
-                ng-click="zoomHandler('in')">
-                    <span class="glyphicon glyphicon-zoom-in"></span>
-            </button>
-            |
-            <button 
-                title="Rotate: When an item is clicked!"
-                ng-click="addRotateHandler(90)">Rotate</span></button>
-            
-            <button 
-            title="Crop: When an item is clicked!"
-            ng-click="cropHandler()">Crop</span></button>
-           <!-- <button title="Crop (Situational when image is selected it will show?)"><span class="glyphicon glyphicon-circle-arrow-right"></span></button> -->
-        </div>
-    </div>
-
 </body>
 </html>

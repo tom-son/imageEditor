@@ -1,7 +1,19 @@
-var editApp = angular.module('editApp', []);
+var editApp = angular.module('editApp', ['ngRoute']);
 
-editApp.controller('mainController', ['$scope', '$http',
-function($scope, $http){
+editApp.config(['$routeProvider', function($routeProvider) {
+    $routeProvider
+    .when('/home', {templateUrl: 'partials/home.html'})
+    .when('/editor/:type', {
+        templateUrl: 'partials/editor.html',
+        controller: 'mainController'
+    })
+    .otherwise({redirectTo: '/home'});
+}]);
+
+
+
+editApp.controller('mainController', ['$scope', '$http', '$routeParams',
+function($scope, $http, $routeParams){
     $scope.state = {
         textString: "",
         fontSize: 12,
@@ -28,7 +40,10 @@ function($scope, $http){
         clickedItem: -1,
         resizePoint: -1,
         resizerRadius: 15,
-        crop: -1
+        crop: -1,
+
+
+        type: $routeParams.type
     };
 
 
@@ -122,7 +137,7 @@ function($scope, $http){
                     elementConfig.x,
                     elementConfig.y);
                 break;
-            case "clipArt":
+            case "drawImage":
                 // Image: turn filename into image.
                 let image = new Image();
                 image.onload = (function(elementConfig, image, cropConfig) {
@@ -131,6 +146,8 @@ function($scope, $http){
                         //attempt to rotate however when we rotate we need to update co-ord, drag points etc.
                         ctx.save();
                         $scope.rotateCanvas(element, ctx);
+                        console.log(cropConfig.x, cropConfig.y, cropConfig.width, cropConfig.height,-(elementConfig.width/2),-(elementConfig.height/2), elementConfig.width,
+                            elementConfig.height);
                         ctx.drawImage(
                             // Below only implements image with rotate however other one!                            
 
@@ -143,7 +160,6 @@ function($scope, $http){
                             // elementConfig.height,
 
                             // Trying to implement image with rotate and crop
-
                             image,
                             cropConfig.x,
                             cropConfig.y,
@@ -158,7 +174,7 @@ function($scope, $http){
                         ctx.restore();
                     }
                 })(elementConfig, image, element.cropConfig);
-                image.src = elementConfig.filename;
+                image.src = elementConfig.image;
 
                 break;
         }
@@ -249,9 +265,9 @@ function($scope, $http){
         console.log(filename);
         // store image into layers.
         $scope.state.layers.push({
-            type: "clipArt",
+            type: "drawImage",
             config: {
-                filename: filename,
+                image: filename,
                 // configuration of image for drawImage
                 x: 0,
                 y: 0,
@@ -271,6 +287,7 @@ function($scope, $http){
         $scope.paintCanvas();
     }
 
+
     $scope.addImageHandler = function(event) {
         var file = document.getElementById("addImgFile").files[0];
         // FileReader to read the image.
@@ -279,15 +296,30 @@ function($scope, $http){
         var image = new Image();
 
         fr.onload = function(event) {
+            console.log(fr.result);
             image.onload = function(event) {
                 // store image into layers.
                 $scope.state.layers.push({
                     type: "drawImage",
                     config: {
-                                                                   // What to do with image and where to store it.
+                         image: fr.result,
+                         x: 0,
+                         y: 0,
+                         width: image.width,
+                         height: image.height,
+                         rotate: 0
+                    },
+                    cropConfig: {
+                        x: 0,
+                        y: 0,
+                        width: image.width,
+                        height: image.height
                     }
                 });
+                console.log($scope.state.layers);
                 $scope.paintCanvas();
+
+                
             }
             image.src = event.target.result;
         }
@@ -308,10 +340,6 @@ function($scope, $http){
         }
         console.log($scope.state.crop);
 
-        // $scope.state.layers[0].cropConfig.width = 200;
-        // $scope.state.layers[0].cropConfig.height = 200;
-        // $scope.state.layers[0].config.width = 200;
-        // $scope.state.layers[0].config.height = 200;
         $scope.paintCanvas();
     }
 
@@ -832,3 +860,8 @@ function($scope){
     $scope.dragElement(document.getElementById(("controller")));
     $scope.dragElement(document.getElementById(("layers")));
 }]);
+
+
+
+
+

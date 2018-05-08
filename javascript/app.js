@@ -2,8 +2,11 @@ var editApp = angular.module('editApp', ['ngRoute']);
 
 editApp.config(['$routeProvider', function($routeProvider) {
     $routeProvider
-    .when('/home', {templateUrl: 'partials/home.html'})
-    .when('/editor/:type', {
+    .when('/home', {
+        templateUrl: 'partials/home.html',
+        controller: 'HomeController'
+    })
+    .when('/editor/:type/:width/:height', {
         templateUrl: 'partials/editor.html',
         controller: 'mainController'
     })
@@ -42,8 +45,10 @@ function($scope, $http, $routeParams){
         resizerRadius: 15,
         crop: -1,
 
-
-        type: $routeParams.type
+        // Testing for route
+        type: $routeParams.type,
+        w: $routeParams.width,
+        h: $routeParams.height
     };
 
 
@@ -864,4 +869,15 @@ function($scope){
 
 
 
+// Home controller
+editApp.controller('HomeController', ['$scope',
+function($scope){
+    $scope.createBlankHandler = function() {
+        var width = document.getElementById("cbcw").value;
+        var height = document.getElementById("cbch").value;
 
+        console.log("Create blank canvas with", width, height);
+        var path = "#!/editor/createBlankCanvas/" + width + "/" + height;
+        location.href = path;
+    }
+}]);

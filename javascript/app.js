@@ -139,8 +139,11 @@ function($scope, $http, $routeParams){
                 ctx.fillStyle = elementConfig.colour;
                 ctx.fillText(
                     elementConfig.string,
-                    elementConfig.x,
-                    elementConfig.y);
+                    // elementConfig.x,
+                    // elementConfig.y
+                    -(elementConfig.width/2),
+                    -(elementConfig.height/2)
+                );
                 break;
             case "drawImage":
                 // Image: turn filename into image.
@@ -225,8 +228,6 @@ function($scope, $http, $routeParams){
         //     $scope.drawResizePoints($scope.state.layers[$scope.state.clickedItem].cropConfig);
         // }
         ctx.restore();
-        
-    
     }
 
 
@@ -236,19 +237,65 @@ function($scope, $http, $routeParams){
         setTimeout(function() {
             $scope.state.layers.forEach(function(element, index) {
                 // Layers: from layers option in html
-                var canvas = document.getElementById(index+"Layer");
-                canvas.style = "background: white;"
+                var mainCanvas = document.getElementById('canvas');
+                var layerCanvas = document.getElementById(index+"Layer");
+                var ctx = layerCanvas.getContext('2d');
+                layerCanvas.style = "background: white;"
 
-                $scope.clearCanvas(canvas);
-                $scope.paintElement(canvas, element);
+                var isWidthGreater;
+                var aspectRatio = mainCanvas.width / mainCanvas.height;
+
+                mainCanvas.width > mainCanvas.height
+                ? isWidthGreater = true
+                : isWidthGreater = false;
+
+                console.log(isWidthGreater, aspectRatio)
+                // Set up the correct ratio for the layers display
+                if (isWidthGreater) {
+                    layerCanvas.width = 130;
+                    layerCanvas.height = 130 / aspectRatio;
+                } else {
+                    layerCanvas.height = 100;
+                    layerCanvas.width = 100 * aspectRatio;
+                }
+
+                var scaleWidth = $scope.getScale('small', mainCanvas.width, layerCanvas.width);
+                var scaleHeight = $scope.getScale('small', mainCanvas.height, layerCanvas.height);
+
+                console.log(scaleWidth, scaleHeight);
+                ctx.scale(scaleWidth, scaleHeight);
+
+                $scope.clearCanvas(layerCanvas);
+                $scope.paintElement(layerCanvas, element);
     
             });
         },1500);
-        
+    }
+
+    $scope.paintClipArt = function() {
+
+    }
+
+    $scope.getScale = function(type, originalLength, adjustedLength) {
+        if(type === 'small') {
+            return adjustedLength / originalLength;
+        } else if ( type === ' large') {
+            return originalLength / adjustedLength;
+        }
+        // type didn't match getScale failed!
+        console.log("getScale failed! Type doesn't match");
+        return -1;
     }
 
 
+
     $scope.addTextHandler = function(xpos, ypos) {
+        console.log("asdf");
+        var ctx = document.getElementById('canvas').getContext('2d');
+        ctx.font = $scope.state.fontSize + "px " + $scope.state.font;
+
+        var stringWidth =  ctx.measureText($scope.state.textString).width;
+
         $scope.state.layers.push({
             type: "fillText",
             config: {
@@ -257,7 +304,7 @@ function($scope, $http, $routeParams){
                 y: ypos,
                 font: $scope.state.fontSize + "px " + $scope.state.font,
                 colour: $scope.state.fontColor,
-                width: 100,
+                width: stringWidth,
                 height: 50
             }
         });
@@ -446,14 +493,21 @@ function($scope, $http, $routeParams){
         var layers = $scope.state.layers;
         for (var i=0; i<layers.length; i++){
             var item = layers[i];
+            var scaleX = item.config.x * $scope.state.scale;
+            var scaleY = item.config.y * $scope.state.scale;
+            var scaleW = item.config.width * $scope.state.scale;
+            var scaleH = item.config.height * $scope.state.scale;
+
+
+
             // Test if the mouse is inside this rect.
             if (item.config.width){
                 switch (item.type){
                     case "fillText":
-                        if (mx > item.config.x 
-                            && mx < item.config.x + item.config.width 
-                            && my < item.config.y 
-                            && my > item.config.y - item.config.height) {
+                        if (mx > scaleX 
+                            && mx < scaleX + scaleW 
+                            && my < scaleY 
+                            && my > scaleY - scaleH) {
                             // If yes, set that rects isDragging = true 
                             $scope.state.dragOk = true;
                             item.isDragging = true;
@@ -461,27 +515,27 @@ function($scope, $http, $routeParams){
                         }
                         break;
                     case "drawImage":
-                        if (mx > item.config.x 
-                            && mx < item.config.x + item.config.width 
-                            && my > item.config.y 
-                            && my < item.config.y + item.config.height) {
+                        if (mx > scaleX 
+                            && mx < scaleX + scaleW 
+                            && my > scaleY 
+                            && my < scaleY + scaleH) {
                             // Ff yes, set that rects isDragging = true 
                             $scope.state.dragOk = true;
                             item.isDragging = true;
                             return i;
                         }
                         break;
-                    case "clipArt":
-                        if (mx > item.config.x 
-                            && mx < item.config.x + item.config.width 
-                            && my > item.config.y 
-                            && my < item.config.y + item.config.height) {
-                            // Ff yes, set that rects isDragging = true 
-                            $scope.state.dragOk = true;
-                            item.isDragging = true;
-                            return i;
-                        }
-                        break;
+                    // case "clipArt":
+                    //     if (mx > item.config.x 
+                    //         && mx < item.config.x + item.config.width 
+                    //         && my > item.config.y 
+                    //         && my < item.config.y + item.config.height) {
+                    //         // Ff yes, set that rects isDragging = true 
+                    //         $scope.state.dragOk = true;
+                    //         item.isDragging = true;
+                    //         return i;
+                    //     }
+                    //     break;
                 }
             } 
         }

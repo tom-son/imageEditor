@@ -11,12 +11,11 @@
             <div id="layersheader" class="drag-header" ><button  ng-click="minimise('controller')">X</button></div> 
             <!-- Layers: layers options goes here  -->
             <div 
-            class="row"
             ng-repeat="(key, value) in $parent.state.layers">
                 <canvas 
                     id="{{key}}Layer"
-                    width="100" 
-                    height="80">
+                    width="130" 
+                    height="100">
                 </canvas>
             </div>
         </div>
@@ -97,9 +96,9 @@
                     ng-repeat="(key, value) in $parent.state.clipArt"
                     ng-click="addClipArtHandler(value)">
                         <canvas 
-                        id="{{value}}"
+                        id="{{value}}ClipArt"
                         
-                        style="background:red;">
+                        style="background:white;">
                         </canvas> <br>
                         click red clipart
                 </div>

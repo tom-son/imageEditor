@@ -89,6 +89,16 @@ input[type="file"] {
 
 /* Styling for home page */
 
+.lymlive-logo {
+    height: 150px;
+    width: 500px;
+    background-image: url(http://lymlive.com.au/wp-content/uploads/2018/01/Lymlive_Media_on_Black_npb.png);
+    background-size: 500px ;
+    background-repeat: no-repeat;
+    margin: 50px auto;
+    /* text-align: center; */
+}
+
 .home-background {
     /* 
         position: absolute;
@@ -111,7 +121,8 @@ input[type="file"] {
 .edit-selection {
     width: 850px;
     height: 400px;
-    padding: 160px 2% 0 2%;
+    padding: 10px 2% 0 2%;
     margin: 10% auto;
-    background-color: rgba(22, 125, 166, 0.3);
+    background-color: rgba(43, 43, 43, 0.2);
+    /* background-color: rgba(22, 125, 166, 0.3); */
 }

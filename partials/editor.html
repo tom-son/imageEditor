@@ -11,11 +11,13 @@
             <div id="layersheader" class="drag-header" ><button  ng-click="minimise('controller')">X</button></div> 
             <!-- Layers: layers options goes here  -->
             <div 
+            style="text-align: center"
             ng-repeat="(key, value) in $parent.state.layers">
                 <canvas 
                     id="{{key}}Layer"
                     width="130" 
-                    height="100">
+                    height="100"
+                    style="margin: atuo;">
                 </canvas>
             </div>
         </div>
@@ -124,8 +126,16 @@
            <button title="Save"><span class="glyphicon glyphicon-floppy-disk"></span></button>
            <button title="Upload JSON"><span class="glyphicon glyphicon-upload"></span></button>
            <button title="Download JSON"><span class="glyphicon glyphicon-download-alt"></span></button>
-           <button title="Redo"><span class="glyphicon glyphicon-circle-arrow-left"></span></button>
-           <button title="Undo"><span class="glyphicon glyphicon-circle-arrow-right"></span></button>
+           <button 
+                title="Undo" 
+                ng-click="popLayerTo(state.layers, state.historyLayers)">
+                <span class="glyphicon glyphicon-circle-arrow-left"></span>
+            </button>
+           <button 
+                title="Redo" 
+                ng-click="popLayerTo(state.historyLayers, state.layers)">
+                    <span class="glyphicon glyphicon-circle-arrow-right"></span>
+            </button>
            |
            <button 
                 title="Zoom-Out"
@@ -148,10 +158,5 @@
            <!-- <button title="Crop (Situational when image is selected it will show?)"><span class="glyphicon glyphicon-circle-arrow-right"></span></button> -->
         </div>
     </div>
-
-
-    type : {{state.type}} ->
-    width : {{state.w}} ->
-    height : {{state.h}} ->>> Use some sort of onInit to invoke  function when loading
 </body>
 

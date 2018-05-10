@@ -6,7 +6,7 @@ editApp.config(['$routeProvider', function($routeProvider) {
         templateUrl: 'partials/home.html',
         controller: 'HomeController'
     })
-    .when('/editor/:type/:width/:height', {
+    .when('/editor', {
         templateUrl: 'partials/editor.html',
         controller: 'mainController'
     })
@@ -31,6 +31,7 @@ function($scope, $http, $routeParams){
 
         },
         layers: [],
+        historyLayers: [],
         clipArt: [
             "heart-clipart.png",
             "https://www.shareicon.net/data/128x128/2017/04/04/882436_media_512x512.png"
@@ -154,8 +155,6 @@ function($scope, $http, $routeParams){
                         //attempt to rotate however when we rotate we need to update co-ord, drag points etc.
                         ctx.save();
                         $scope.rotateCanvas(element, ctx);
-                        console.log(cropConfig.x, cropConfig.y, cropConfig.width, cropConfig.height,-(elementConfig.width/2),-(elementConfig.height/2), elementConfig.width,
-                            elementConfig.height);
                         ctx.drawImage(
                             // Below only implements image with rotate however other one!                            
 
@@ -197,7 +196,10 @@ function($scope, $http, $routeParams){
         $scope.clearCanvas(canvas);
         var scaleToFixed = $scope.state.scale.toFixed(1);
         // ctx.scale(scaleToFixed, scaleToFixed);
-        ctx.drawImage($scope.state.backgroundImg,0,0);
+        if($scope.state.backgroundImg !== null) {
+            ctx.drawImage($scope.state.backgroundImg,0,0);
+        }
+        
 
         var layers = $scope.state.layers;
         for (var i=0; i < layers.length; i++){
@@ -249,7 +251,6 @@ function($scope, $http, $routeParams){
                 ? isWidthGreater = true
                 : isWidthGreater = false;
 
-                console.log(isWidthGreater, aspectRatio)
                 // Set up the correct ratio for the layers display
                 if (isWidthGreater) {
                     layerCanvas.width = 130;
@@ -262,7 +263,6 @@ function($scope, $http, $routeParams){
                 var scaleWidth = $scope.getScale('small', mainCanvas.width, layerCanvas.width);
                 var scaleHeight = $scope.getScale('small', mainCanvas.height, layerCanvas.height);
 
-                console.log(scaleWidth, scaleHeight);
                 ctx.scale(scaleWidth, scaleHeight);
 
                 $scope.clearCanvas(layerCanvas);
@@ -308,6 +308,7 @@ function($scope, $http, $routeParams){
                 height: 50
             }
         });
+        $scope.state.historyLayers = [];
         $scope.paintCanvas();
         $scope.setDefaultValues();
     }
@@ -336,6 +337,7 @@ function($scope, $http, $routeParams){
                 height: 260
             }
         });
+        $scope.state.historyLayers = [];
         $scope.paintCanvas();
     }
 
@@ -369,6 +371,7 @@ function($scope, $http, $routeParams){
                     }
                 });
                 console.log($scope.state.layers);
+                $scope.state.historyLayers = [];
                 $scope.paintCanvas();
 
                 
@@ -383,6 +386,7 @@ function($scope, $http, $routeParams){
         if($scope.state.clickedItem > -1) {
             $scope.state.layers[$scope.state.clickedItem].config.rotate += degrees;
         }
+        $scope.state.historyLayers = [];
         $scope.paintCanvas();
     }
 
@@ -453,10 +457,6 @@ function($scope, $http, $routeParams){
         $scope.drawDragPoint( -(w/2) , h/2 );
         // 7 left
         $scope.drawDragPoint( -(w/2) , 0 );
-
-
-        
-        console.log("points x,y of element", x,y)
     // // 0 top-left
     // $scope.drawDragPoint(x, y);
     // // 1 top
@@ -605,6 +605,7 @@ function($scope, $http, $routeParams){
         // ctx.save();
         // $scope.rotateCanvas(layers[$scope.state.clickedItem], ctx);
         // resize the image
+
         switch ($scope.state.resizePoint) {
             case 0:
                 //top-left
@@ -615,7 +616,7 @@ function($scope, $http, $routeParams){
                 break;
             case 1:
                 // top
-                config.height -= dy;
+                config.height = dx;
                 config.y = my;
                 break;
             case 2:
@@ -649,6 +650,11 @@ function($scope, $http, $routeParams){
                 config.width -= dx;
                 break;
         }
+        if($scope.state.historyLayers.length > 0) {
+            $scope.state.historyLayers = [];
+            console.log( $scope.state.historyLayers);
+        }
+       
     }
 
     // Mouse click event handler to check if mouse click co-ord
@@ -695,18 +701,18 @@ function($scope, $http, $routeParams){
         // Save the current mouse position for mouseMove
         $scope.state.startX = mx;
         $scope.state.startY = my;
-
     }
 
     // Mouse move event handler to move items co-ord in layers array.
     $scope.mouseMove = function(event) {
         var canvas = document.getElementById("canvas");
         var ctx = canvas.getContext('2d');
+
+        var layers = $scope.state.layers;
+        
         var borderBox = canvas.getBoundingClientRect();
         var offsetX = borderBox.left;
         var offsetY = borderBox.top;
-        var layers = $scope.state.layers;
-
         
          // Get the current mouse position.
         var mx = parseInt(event.clientX-offsetX);
@@ -719,6 +725,8 @@ function($scope, $http, $routeParams){
 
         // If we're dragging anything...
         if ($scope.state.dragOk){
+            // ctx.save();
+            // $scope.rotateCanvas(layers[$scope.state.clickedItem], ctx);
             // Tell the browser we're handling this mouse event.
             event.preventDefault();
             event.stopPropagation();
@@ -743,13 +751,13 @@ function($scope, $http, $routeParams){
                 var item = layers[$scope.state.clickedItem];
                 item.config.x+=dx;
                 item.config.y+=dy;
+                $scope.state.historyLayers = [];
             }
 
             // if an item and resizePoints are selected and !crop then resize
             if ($scope.state.clickedItem > -1
                 && $scope.state.resizePoint > -1
                 && $scope.state.crop === -1) {
-                
                 $scope.resizeItem(layers[$scope.state.clickedItem].config, $scope.state.resizePoint, mx, my, dx, dy);
                 // if an item and resizePoints are selected and crop then crop
             } else if($scope.state.clickedItem > -1
@@ -758,6 +766,7 @@ function($scope, $http, $routeParams){
                     $scope.resizeItem(layers[$scope.state.clickedItem].config, $scope.state.resizePoint, mx, my, dx, dy);
                     $scope.resizeItem(layers[$scope.state.clickedItem].cropConfig, $scope.state.resizePoint, mx, my, dx, dy);
             }
+
             // ctx.restore();
             // Redraw the scene with the new rect positions.
             $scope.paintCanvas();
@@ -768,11 +777,14 @@ function($scope, $http, $routeParams){
 
 
         }
-        
     }
 
     // Mouse click release handler to reset all dragging flags in layers array.
     $scope.mouseUp = function(event) {
+
+        console.log("layers",$scope.state.layers);
+        console.log("historyLayers", $scope.state.historyLayers);
+
         event.preventDefault();
         event.stopPropagation();
 
@@ -784,11 +796,17 @@ function($scope, $http, $routeParams){
             layers[i].isDragging=false;
         }
 
+        // Reset values
+        // Exit crop when mouse is released
+        $scope.state.crop = -1;
+
+
         // Temparary position for testing
         // was used in paint canvas however might not be good there
         // as it paints way too many time.
         $scope.paintLayers();
 
+        
 
         console.log(layers[$scope.state.clickedItem].config);
     }
@@ -804,10 +822,45 @@ function($scope, $http, $routeParams){
 
 
 
+    // ------- undo and redo functions
+    $scope.popLayerTo = function(fromLayers, toLayers) {
+        console.log(fromLayers, toLayers);
+        var lastElement = fromLayers.pop();
+        console.log(lastElement);
+        toLayers.push(lastElement);
+        console.log("After push", fromLayers, toLayers);
+        $scope.paintCanvas();
+    }
 
+    $scope.redoCanvas = function() {
+        
+    }
+
+
+
+
+    // ------- Page set up settings ---------
+
+    $scope.createBlankHandler = function(canvas, width, height) {
+        canvas.width = width;
+        canvas.height = height;
+    }
+
+
+    $scope.onInit = function() {
+        var canvas = document.getElementById('canvas');
+        switch($scope.state.type) {
+            case 'createBlankCanvas':
+                $scope.createBlankHandler(canvas, $scope.state.w, $scope.state.h);
+                break;
+        }
+    }
 
     // After all above functions are declared envoke these.
     $scope.setCanvasListeners();
+
+    // Initialise canvas
+    $scope.onInit();
 }]);
 
 

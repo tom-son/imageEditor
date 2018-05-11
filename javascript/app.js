@@ -290,7 +290,6 @@ function($scope, $http, $routeParams){
 
 
     $scope.addTextHandler = function(xpos, ypos) {
-        console.log("asdf");
         var ctx = document.getElementById('canvas').getContext('2d');
         ctx.font = $scope.state.fontSize + "px " + $scope.state.font;
 
@@ -315,7 +314,6 @@ function($scope, $http, $routeParams){
 
     
     $scope.addClipArtHandler = function(filename) {
-        console.log(filename);
         // store image into layers.
         $scope.state.layers.push({
             type: "drawImage",
@@ -500,7 +498,6 @@ function($scope, $http, $routeParams){
     
   
     $scope.itemsHitTest = function(mx, my) {
-        console.log("elementHitTest()");
         var layers = $scope.state.layers;
         for (var i=layers.length -1; i>=0; i--){
             var item = layers[i];
@@ -663,10 +660,31 @@ function($scope, $http, $routeParams){
         }
         if($scope.state.historyLayers.length > 0) {
             $scope.state.historyLayers = [];
-            console.log( $scope.state.historyLayers);
         }
        
     }
+
+    // Handler to add keyboard functionality to element string.
+
+    // WARNING: Only lower and uppercase letters as well as backspace works!
+    $scope.updateTextHandler = function(e, element) {
+        console.log(e, element);
+
+        if (e.keyCode!=16){ // If the pressed key is anything other than SHIFT
+            if (e.keyCode >= 65 && e.keyCode <= 90){ // If the key is a letter
+                if (e.shiftKey){ // If SHIFT key is down, capital letter
+                    element.config.string += e.key;
+                } else { // else lowecase letter
+                    element.config.string += e.key;
+                }
+            } else if (e.keyCode === 8){ // If BACKSPACE key remove last letter in string
+                element.config.string = element.config.string.slice(0, -1);
+            } else {
+                console.log("ASCII Code (non-letter): "+String.fromCharCode(e.keyCode));
+            }
+      }
+    }
+
 
     // Mouse click event handler to check if mouse click co-ord
     // is within item co-ord in the config.
@@ -696,11 +714,17 @@ function($scope, $http, $routeParams){
 
         if($scope.state.clickedItem > -1) {
             $scope.updateZIndex(layers, $scope.state.clickedItem);
+            // Update clickedItem to highest priority which is the last
+            // element in the array.
             $scope.state.clickedItem = layers.length - 1;
-            
-            console.log($scope.state.clickedItem, layers.length)
-
             $scope.state.resizePoint = $scope.pointsHitTest(mx, my, $scope.state.clickedItem);
+            if($scope.state.layers[$scope.state.clickedItem].type === "fillText") {
+                document.addEventListener("keydown", (function(event) {
+                    $scope.updateTextHandler(event, $scope.state.layers[$scope.state.clickedItem]);
+                    $scope.paintCanvas();
+
+                }) , false);
+            }
         }
 
         // temp - testing for crop functionality. Turn off crop when no item are selected.
@@ -708,7 +732,7 @@ function($scope, $http, $routeParams){
             $scope.state.crop = -1;
         }
 
-        console.log("clickedItem", $scope.state.clickedItem,"resizePint",$scope.state.resizePoint,"crop",$scope.state.crop);
+        console.log("clickedItem: " + $scope.state.clickedItem,"resizePint: " + $scope.state.resizePoint,"crop: " + $scope.state.crop);
 
     
 
@@ -784,9 +808,6 @@ function($scope, $http, $routeParams){
     // Mouse click release handler to reset all dragging flags in layers array.
     $scope.mouseUp = function(event) {
 
-        console.log("layers",$scope.state.layers);
-        console.log("historyLayers", $scope.state.historyLayers);
-
         event.preventDefault();
         event.stopPropagation();
 
@@ -808,9 +829,6 @@ function($scope, $http, $routeParams){
         // as it paints way too many time.
         $scope.paintLayers();
 
-        
-
-        console.log(layers[$scope.state.clickedItem].config);
     }
     
 
@@ -903,7 +921,6 @@ function($scope){
             $scope.showControllers[controller] = false;
         }
         $scope.showControllers[controllerName] = true;
-        console.log($scope.showControllers);
     };
 
 
@@ -960,6 +977,7 @@ function($scope){
 
     $scope.show = function(e) {
         if (e.ctrlKey && e.keyCode == 83) {
+            console.log(e);
             document.getElementById('controller').style.display = "block";
             document.getElementById('layers').style.display = "block";
         }

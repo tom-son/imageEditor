@@ -486,12 +486,23 @@ function($scope, $http, $routeParams){
         ctx.closePath();
         ctx.fill();
     }
+
+    // Updates the item z-index by removing clicked item
+    // to the end of layers array. Where the end of layers
+    // array has the highest priority.
+
+    // You should update the itemClicked after using this function
+    // as itemClicked is not the last element in array
+    $scope.updateZIndex = function(layers, itemClicked) {
+        var removed = layers.splice(itemClicked, 1);
+        layers.push(removed[0]);
+    }
     
   
     $scope.itemsHitTest = function(mx, my) {
         console.log("elementHitTest()");
         var layers = $scope.state.layers;
-        for (var i=0; i<layers.length; i++){
+        for (var i=layers.length -1; i>=0; i--){
             var item = layers[i];
             var scaleX = item.config.x * $scope.state.scale;
             var scaleY = item.config.y * $scope.state.scale;
@@ -682,7 +693,13 @@ function($scope, $http, $routeParams){
 
         $scope.state.clickedItem = $scope.itemsHitTest(mx, my);
 
+
         if($scope.state.clickedItem > -1) {
+            $scope.updateZIndex(layers, $scope.state.clickedItem);
+            $scope.state.clickedItem = layers.length - 1;
+            
+            console.log($scope.state.clickedItem, layers.length)
+
             $scope.state.resizePoint = $scope.pointsHitTest(mx, my, $scope.state.clickedItem);
         }
 
@@ -730,21 +747,6 @@ function($scope, $http, $routeParams){
             // Tell the browser we're handling this mouse event.
             event.preventDefault();
             event.stopPropagation();
-
-
-            // console.log(mx, my);
-            // console.log(dx, dy);
-
-            // Move each rect that isDragging 
-            // by the distance the mouse has moved
-            // since the last mousemove.
-            // for(var i=0; i<layers.length; i++){
-            //     var item = layers[$scope.state.clickedItem];
-            //     if(item.isDragging){
-            //         item.config.x+=dx;
-            //         item.config.y+=dy;
-            //     }
-            // }
 
             if ($scope.state.clickedItem > -1
                 && $scope.state.resizePoint === -1){
@@ -830,10 +832,6 @@ function($scope, $http, $routeParams){
         toLayers.push(lastElement);
         console.log("After push", fromLayers, toLayers);
         $scope.paintCanvas();
-    }
-
-    $scope.redoCanvas = function() {
-        
     }
 
 

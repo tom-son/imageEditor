@@ -45,6 +45,8 @@ function($scope, $http, $routeParams){
         resizePoint: -1,
         resizerRadius: 15,
         crop: -1,
+        // Text handler flag to only allow 1 text handler to exist
+        isTextHandlerOn: false,
 
         // Testing for route
         type: $routeParams.type,
@@ -422,7 +424,7 @@ function($scope, $http, $routeParams){
         var elementConfig = element.config;
         // ctx.translate(elementConfig.x, elementConfig.y);
         ctx.translate(elementConfig.x + (elementConfig.width /2), elementConfig.y + (elementConfig.height /2));
-        // ctx.moveTo(0,0);
+        ctx.moveTo(0,0);
         ctx.rotate(elementConfig.rotate * (Math.PI / 180));
     }
 
@@ -552,53 +554,62 @@ function($scope, $http, $routeParams){
 
 
     $scope.pointsHitTest = function(mx, my, clickedItem) {
-        var dx, dy, resizerRadius2 = $scope.state.resizerRadius * $scope.state.resizerRadius;
+        var dx, dy, resizerRadius2 = $scope.state.resizerRadius * $scope.state.resizerRadius * 2;
         var config = $scope.state.layers[clickedItem].config;
+        // new mx and my with scale
+        var x, y, width, height;
+        x = config.x * $scope.state.scale;
+        y = config.y * $scope.state.scale;
+        width = config.width * $scope.state.scale;
+        height = config.height * $scope.state.scale;
+        
         // top-left
-        dx = mx - config.x;
-        dy = my - config.y;
+        dx = mx - x;
+        dy = my - y;
         if (dx * dx + dy * dy <= resizerRadius2) {
+            // this.style.cursor = 'nw-resize';
             return (0);
         }
         // top
-        dx = mx - ( config.x + (config.width / 2) );
-        dy = my - ( config.y)
+        dx = mx - ( x + (width / 2) );
+        dy = my - ( y);
+        console.log(dx * dx + dy * dy);
         if (dx * dx + dy * dy <= resizerRadius2) {
             return (1);
         }
         // top-right
-        dx = mx - (config.x + config.width);
-        dy = my - config.y;
+        dx = mx - (x + width);
+        dy = my - y;
         if (dx * dx + dy * dy <= resizerRadius2) {
             return (2);
         }
         // right
-        dx = mx - (config.x + config.width);
-        dy = my - ( config.y + (config.height / 2) );
+        dx = mx - (x + width);
+        dy = my - ( y + (height / 2) );
         if (dx * dx + dy * dy <= resizerRadius2) {
             return (3);
         }
         // bottom-right
-        dx = mx - (config.x + config.width);
-        dy = my - (config.y + config.height);
+        dx = mx - (x + width);
+        dy = my - (y + height);
         if (dx * dx + dy * dy <= resizerRadius2) {
             return (4);
         }
         // bottom
-        dx = mx - ( config.x + (config.width / 2) );
-        dy = my - (config.y + config.height);
+        dx = mx - ( x + (width / 2) );
+        dy = my - (y + height);
         if (dx * dx + dy * dy <= resizerRadius2) {
             return (5);
         }
         // bottom-left
-        dx = mx - config.x;
-        dy = my - (config.y + config.height);
+        dx = mx - x;
+        dy = my - (y + height);
         if (dx * dx + dy * dy <= resizerRadius2) {
             return (6);
         }
         // left
-        dx = mx - config.x;
-        dy = my - (config.y + (config.height / 2) );
+        dx = mx - x;
+        dy = my - (y + (height / 2) );
         if (dx * dx + dy * dy <= resizerRadius2) {
             return (7);
         }
@@ -614,6 +625,13 @@ function($scope, $http, $routeParams){
         // $scope.rotateCanvas(layers[$scope.state.clickedItem], ctx);
         // resize the image
 
+        // distance x and y (dx, dy) adjust to scale
+        dx = dx / $scope.state.scale;
+        dy = dy / $scope.state.scale;
+        mx = mx / $scope.state.scale;
+        my = my / $scope.state.scale;
+        
+
         switch ($scope.state.resizePoint) {
             case 0:
                 //top-left
@@ -621,41 +639,49 @@ function($scope, $http, $routeParams){
                 config.width -= dx;
                 config.y = my;
                 config.height -= dy;
+                console.log("0: adjust ");
                 break;
             case 1:
                 // top
-                config.height = dx;
+                config.height -= dy;
                 config.y = my;
+                console.log("1: adjust h, y");
                 break;
             case 2:
                 // top-right
                 config.y = my;
                 config.width += dx;
                 config.height -= dy;
+                console.log("2: adjust y, w, h");
                 break;
             case 3:
                 // right
                 config.width += dx;
+                console.log("3: adjust w");
                 break;
             case 4:
                 // bottom-right
                 config.width = mx - config.x;
                 config.height = my - config.y;
+                console.log("4: adjust w, h");
                 break;
             case 5:
                 // bottom
                 config.height += dy;
+                console.log("5: adjust h");
                 break;
             case 6:
                 // bottom-left
                 config.x = mx;
                 config.width -= dx;
                 config.height += dy;
+                console.log("6: adjust x, w, h");
                 break;
             case 7:
                 // bottom-left
                 config.x += dx;
                 config.width -= dx;
+                console.log("7: adjust x, w");
                 break;
         }
         if($scope.state.historyLayers.length > 0) {
@@ -667,8 +693,10 @@ function($scope, $http, $routeParams){
     // Handler to add keyboard functionality to element string.
 
     // WARNING: Only lower and uppercase letters as well as backspace works!
-    $scope.updateTextHandler = function(e, element) {
-        console.log(e, element);
+    $scope.updateTextHandler = function(e) {
+        var element = $scope.state.layers[$scope.state.clickedItem];
+
+        console.log(e, element.config.string);
 
         if (e.keyCode!=16){ // If the pressed key is anything other than SHIFT
             if (e.keyCode >= 65 && e.keyCode <= 90){ // If the key is a letter
@@ -683,7 +711,9 @@ function($scope, $http, $routeParams){
                 console.log("ASCII Code (non-letter): "+String.fromCharCode(e.keyCode));
             }
       }
+      $scope.paintCanvas();
     }
+
 
 
     // Mouse click event handler to check if mouse click co-ord
@@ -718,12 +748,13 @@ function($scope, $http, $routeParams){
             // element in the array.
             $scope.state.clickedItem = layers.length - 1;
             $scope.state.resizePoint = $scope.pointsHitTest(mx, my, $scope.state.clickedItem);
-            if($scope.state.layers[$scope.state.clickedItem].type === "fillText") {
-                document.addEventListener("keydown", (function(event) {
-                    $scope.updateTextHandler(event, $scope.state.layers[$scope.state.clickedItem]);
-                    $scope.paintCanvas();
-
-                }) , false);
+            if ($scope.state.layers[$scope.state.clickedItem].type === "fillText" && !$scope.state.isTextHandlerOn) {
+                document.addEventListener("keydown", $scope.updateTextHandler);
+                $scope.state.isTextHandlerOn = true;
+            } else if ($scope.state.layers[$scope.state.clickedItem].type !== "fillText" && $scope.state.isTextHandlerOn){
+                document.removeEventListener("keydown", $scope.updateTextHandler);
+                $scope.state.isTextHandlerOn = false;
+                console.log("remove");
             }
         }
 
@@ -775,8 +806,8 @@ function($scope, $http, $routeParams){
             if ($scope.state.clickedItem > -1
                 && $scope.state.resizePoint === -1){
                 var item = layers[$scope.state.clickedItem];
-                item.config.x+=dx;
-                item.config.y+=dy;
+                item.config.x+=dx / $scope.state.scale;
+                item.config.y+=dy / $scope.state.scale;
                 $scope.state.historyLayers = [];
             }
 
@@ -877,6 +908,14 @@ function($scope, $http, $routeParams){
 
     // Initialise canvas
     $scope.onInit();
+
+
+
+    document.addEventListener('keydown', function(e){
+        $scope.state.layers[$scope.state.clickedItem].config.width++;
+        console.log($scope.state.layers[$scope.state.clickedItem].config.width);
+        $scope.paintCanvas();s
+    })
 }]);
 
 

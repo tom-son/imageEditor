@@ -112,7 +112,10 @@
     </div>
 
     
-    <div class="toolbar-container">
+    <div 
+        ng-controller="ServerController"
+        class="toolbar-container">
+
         <div class="toolbar">
             <label title="Import background" style="cursor: pointer;">
                 <input 
@@ -141,7 +144,7 @@
                 title="Zoom-Out"
                 ng-click="zoomHandler('out')"><span class="glyphicon glyphicon-zoom-out"></span></button>
             
-                {{state.scale}}
+                {{state.scale*100}}%
            <button 
                 title="Zoom-In"
                 ng-click="zoomHandler('in')">

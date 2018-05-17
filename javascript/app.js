@@ -54,6 +54,87 @@ function($scope, $http, $routeParams){
         h: $routeParams.height
     };
 
+    $scope.uploadCanvas = function() {
+        // var file = $scope.state.backgroundImg;
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        // Turn canvas into base64
+        var img = canvas.toDataURL();
+        
+        
+        var data = {
+            json: $scope.state.layers,
+            image: img
+        }
+
+        console.log(data);
+
+
+        console.log("posting")
+        $http.post('/php/upload.php', data).then(
+            function(response){
+                console.log(response);
+
+            },
+            function(){
+                console.log("Failed")
+            }
+        );
+
+
+        
+    }
+
+
+    $scope.createBlank = function() 
+    {
+
+
+
+
+
+        // console.log("Clicked creat blank");
+        // var data = JSON.stringify($scope.layers);
+        // console.log(data);
+        
+        // $http.post('/php/upload.php', data).then(
+        //     function(response){
+        //         console.log(response);
+
+        //         $scope.layers = response.data.layer1;
+        //         console.log($scope.layers);
+        //     },
+        //     function(){
+        //         console.log("Failed")
+        //     });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     // Event handle which w ill be attached to onchange event 
@@ -153,13 +234,11 @@ function($scope, $http, $routeParams){
                 let image = new Image();
                 image.onload = (function(elementConfig, image, cropConfig) {
                     return function() {
-
                         //attempt to rotate however when we rotate we need to update co-ord, drag points etc.
                         ctx.save();
                         $scope.rotateCanvas(element, ctx);
                         ctx.drawImage(
                             // Below only implements image with rotate however other one!                            
-
                             // image,
                             // -(elementConfig.width/2),
                             // -(elementConfig.height/2),
@@ -167,7 +246,6 @@ function($scope, $http, $routeParams){
                             // // -(elementConfig.y + (elementConfig.height/2)),
                             // elementConfig.width,
                             // elementConfig.height,
-
                             // Trying to implement image with rotate and crop
                             image,
                             cropConfig.x,
@@ -193,7 +271,10 @@ function($scope, $http, $routeParams){
     // Draw backgroundImg and all the layers onto the canvas with scale.
     $scope.paintCanvas = function() {
         var canvas = document.getElementById("canvas");
+        console.log(canvas)
         var ctx = canvas.getContext("2d");
+        console.log(ctx)
+        console.log($scope.state)
 
         $scope.clearCanvas(canvas);
         var scaleToFixed = $scope.state.scale.toFixed(1);
@@ -442,21 +523,21 @@ function($scope, $http, $routeParams){
 
 
         // 0 top-left
-        $scope.drawDragPoint( -(w/2), -(h/2) );
+        // $scope.drawDragPoint( -(w/2), -(h/2) );
         // 1 top
-        $scope.drawDragPoint( 0 , -(h/2) );
+        //$scope.drawDragPoint( 0 , -(h/2) );
         // 2 top-right
-        $scope.drawDragPoint( w/2 , -(h/2) );
+        // $scope.drawDragPoint( w/2 , -(h/2) );
         // 3 right
         $scope.drawDragPoint( w/2 , 0 );
         // 4 bottom-right
-        $scope.drawDragPoint( w/2 , h/2 );
+        // $scope.drawDragPoint( w/2 , h/2 );
         // 5 bottom
         $scope.drawDragPoint( 0 , h/2 );
         // 6 bottom-left
-        $scope.drawDragPoint( -(w/2) , h/2 );
+        // $scope.drawDragPoint( -(w/2) , h/2 );
         // 7 left
-        $scope.drawDragPoint( -(w/2) , 0 );
+        //$scope.drawDragPoint( -(w/2) , 0 );
     // // 0 top-left
     // $scope.drawDragPoint(x, y);
     // // 1 top
@@ -552,6 +633,10 @@ function($scope, $http, $routeParams){
         return -1;
     }
 
+                                                                        // Try this
+
+                                                                        // or get mx and my unrotate it and compare like normal.
+
 
     $scope.pointsHitTest = function(mx, my, clickedItem) {
         var dx, dy, resizerRadius2 = $scope.state.resizerRadius * $scope.state.resizerRadius * 2;
@@ -562,12 +647,13 @@ function($scope, $http, $routeParams){
         y = config.y * $scope.state.scale;
         width = config.width * $scope.state.scale;
         height = config.height * $scope.state.scale;
+
         
         // top-left
         dx = mx - x;
         dy = my - y;
         if (dx * dx + dy * dy <= resizerRadius2) {
-            // this.style.cursor = 'nw-resize';
+            // this.style.cursor = 'nw-resize'
             return (0);
         }
         // top
@@ -613,11 +699,25 @@ function($scope, $http, $routeParams){
         if (dx * dx + dy * dy <= resizerRadius2) {
             return (7);
         }
-
-        
         return (-1);
     }
     
+
+    $scope.resizeWithScale = function(config, distance) {
+        // Get scale
+        var scale = config.width / config.height;
+
+        // new width aka adjusted width
+        config.width += distance;
+
+        // adjusted height
+        config.height = config.width / scale;
+
+
+
+    }
+
+
     // Resize the config depending on which resizePoint.
     $scope.resizeItem = function(config, resizePoint, mx, my, dx, dy) {
         // var config = $scope.state.layers[$scope.state.clickedItem].config;
@@ -633,56 +733,57 @@ function($scope, $http, $routeParams){
         
 
         switch ($scope.state.resizePoint) {
-            case 0:
-                //top-left
-                config.x = mx;
-                config.width -= dx;
-                config.y = my;
-                config.height -= dy;
-                console.log("0: adjust ");
-                break;
-            case 1:
-                // top
-                config.height -= dy;
-                config.y = my;
-                console.log("1: adjust h, y");
-                break;
-            case 2:
-                // top-right
-                config.y = my;
-                config.width += dx;
-                config.height -= dy;
-                console.log("2: adjust y, w, h");
-                break;
+            // case 0:
+            //     //top-left
+            //     config.x = mx;
+            //     config.width -= dx;
+            //     config.y = my;
+            //     config.height -= dy;
+            //     console.log("0: adjust ");
+            //     break;
+            // case 1:
+            //     // top
+            //     config.height -= dy;
+            //     config.y = my;
+            //     console.log("1: adjust h, y");
+            //     break;
+            // case 2:
+            //     // top-right
+            //     config.y = my;
+            //     config.width += dx;
+            //     config.height -= dy;
+            //     console.log("2: adjust y, w, h");
+            //     break;
             case 3:
                 // right
-                config.width += dx;
+                $scope.resizeWithScale(config, dx);
+                // config.width += dx;
                 console.log("3: adjust w");
                 break;
-            case 4:
-                // bottom-right
-                config.width = mx - config.x;
-                config.height = my - config.y;
-                console.log("4: adjust w, h");
-                break;
+            // case 4:
+            //     // bottom-right
+            //     config.width = mx - config.x;
+            //     config.height = my - config.y;
+            //     console.log("4: adjust w, h");
+            //     break;
             case 5:
                 // bottom
                 config.height += dy;
                 console.log("5: adjust h");
                 break;
-            case 6:
-                // bottom-left
-                config.x = mx;
-                config.width -= dx;
-                config.height += dy;
-                console.log("6: adjust x, w, h");
-                break;
-            case 7:
-                // bottom-left
-                config.x += dx;
-                config.width -= dx;
-                console.log("7: adjust x, w");
-                break;
+            // case 6:
+            //     // bottom-left
+            //     config.x = mx;
+            //     config.width -= dx;
+            //     config.height += dy;
+            //     console.log("6: adjust x, w, h");
+            //     break;
+            // case 7:
+            //     // bottom-left
+            //     config.x += dx;
+            //     config.width -= dx;
+            //     console.log("7: adjust x, w");
+            //     break;
         }
         if($scope.state.historyLayers.length > 0) {
             $scope.state.historyLayers = [];
@@ -1043,3 +1144,52 @@ function($scope){
         location.href = path;
     }
 }]);
+
+
+
+editApp.controller('ServerController', ['$scope', '$http',
+function($scope, $http){
+
+    $scope.layers = {
+        canvasConfig: {
+            width: 0,
+            height: 0,
+            backgroundImg: null,
+        },
+        layers: "layeron.jsn",
+        image: "base64",
+        fileExt: ".png"
+    };
+    console.log($scope);
+
+    // $scope.test.test1 = "hello";
+    // $scope.test.test2 = "world";
+
+   
+
+
+    $scope.createBlank = function() 
+    {
+
+        console.log("Clicked creat blank");
+        var data = JSON.stringify($scope.layers);
+        console.log(data);
+        
+        $http.post('/php/upload.php', data).then(
+            function(response){
+                console.log(response);
+
+                $scope.layers = response.data.layer1;
+                console.log($scope.layers);
+            },
+            function(){
+                console.log("Failed")
+            });
+    }
+
+    $scope.saveCanvas = function() {
+        console.log("Save Canvas clicked");
+    }
+
+}]);
+
